@@ -90,6 +90,11 @@ class MainActivity:ComponentActivity(){
  var mode by remember { mutableStateOf(if(prefs.getString("mode","SOLO")=="DUEL") PlayMode.DUEL else PlayMode.SOLO) }
  var showExit by remember { mutableStateOf(false) }
  var points by remember { mutableIntStateOf(0) }
+ var livePitch by remember { mutableStateOf<PitchAnalyzer.Pitch?>(null) }
+ var duelRound by remember { mutableIntStateOf(1) }
+ var firstDuelScore by remember { mutableIntStateOf(0) }
+ var secondDuelScore by remember { mutableIntStateOf(0) }
+ var duelHistory by remember { mutableStateOf(prefs.getString("duel_history", "") ?: "") }
  var sessions by remember { mutableIntStateOf(prefs.getInt("sessions",0)) }
  var bestScore by remember { mutableIntStateOf(prefs.getInt("best_score",0)) }
  var lastScore by remember { mutableIntStateOf(prefs.getInt("last_score",0)) }
@@ -171,7 +176,7 @@ class MainActivity:ComponentActivity(){
      Text(if(shift==0)selected.key else "${selected.key}  (${if(shift>0)"+" else ""}$shift)",fontSize=24.sp,color=green,fontWeight=FontWeight.Bold)
      Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){listOf(-2,-1,0,1,2).forEach{n->OutlinedButton({shift=if(n==0)0 else (shift+n).coerceIn(-12,12)}){Text(if(n==0)"Normal" else if(n<0)"Más bajo\n($n)" else "Más alto\n(+$n)")}}}
      Text("Ajuste de −12 a +12 semitonos",color=muted,fontSize=12.sp)
-     Spacer(Modifier.weight(1f));HomeButton("▶  Comenzar a cantar",green){points=0;page=Page.SING}
+     Spacer(Modifier.weight(1f));HomeButton("▶  Comenzar a cantar",green){points=0;duelRound=1;firstDuelScore=0;secondDuelScore=0;page=Page.SING}
     }
     Page.SING->Column(Modifier.fillMaxSize().padding(18.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){
      Text("${selected.title} · ${selected.artist}",fontWeight=FontWeight.Bold)
@@ -189,13 +194,13 @@ class MainActivity:ComponentActivity(){
     Page.RESULT->Column(Modifier.fillMaxSize().padding(22.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){
      Icon(Icons.Default.EmojiEvents,null,tint=gold,modifier=Modifier.size(90.dp));Text("¡Resultado!",fontSize=30.sp,fontWeight=FontWeight.Bold)
      Text(lastScore.toString(),fontSize=52.sp,color=green,fontWeight=FontWeight.Black);Text("puntos · ${if(mode==PlayMode.SOLO)"Partida individual" else "Duelo"}",color=muted)
-     if(mode==PlayMode.DUEL){Text("${profileName.ifBlank{"Jugador 1"}}  vs  ${opponent.ifBlank{"Jugador 2"}}",color=cyan);Text("Puntuación guardada para el perfil local",color=muted,fontSize=12.sp)}
+     if(mode==PlayMode.DUEL){Text("${profileName.ifBlank{"Jugador 1"}}  vs  ${opponent.ifBlank{"Jugador 2"}}",color=cyan);Text("Resultado del duelo: ${firstDuelScore} - ${secondDuelScore}",color=gold);Text(if(firstDuelScore>secondDuelScore) "Ganó ${profileName.ifBlank{"Jugador 1"}}" else if(secondDuelScore>firstDuelScore) "Ganó ${opponent.ifBlank{"Jugador 2"}}" else "Empate",color=green);Text("Historial local guardado",color=muted,fontSize=12.sp)}
      Text("Mejor marca: $bestScore · Sesiones: $sessions",color=gold)
      HomeButton("Volver al menú",green){page=Page.HOME};HomeButton("Otra canción",purple){page=Page.LIBRARY}
     }
     Page.HISTORY->Column(Modifier.fillMaxSize().padding(20.dp)){
      Header("Historial del perfil"){page=Page.HOME}
-     Panel{Text(profileName.ifBlank{"Perfil sin nombre"},fontSize=22.sp,fontWeight=FontWeight.Bold);Text("Mejor puntuación: $bestScore",color=green);Text("Última puntuación: $lastScore",color=gold);Text("Partidas guardadas: $sessions",color=muted)}
+     Panel{Text(profileName.ifBlank{"Perfil sin nombre"},fontSize=22.sp,fontWeight=FontWeight.Bold);Text("Mejor puntuación: $bestScore",color=green);Text("Última puntuación: $lastScore",color=gold);Text("Partidas guardadas: $sessions",color=muted);if(duelHistory.isNotBlank()){Text("DUELOS RECIENTES",color=cyan,fontWeight=FontWeight.Bold);Text(duelHistory,color=muted)}}
      Text("Las puntuaciones son locales y permanecen en este dispositivo.",color=muted,fontSize=12.sp)
     }
     Page.SETTINGS->Column(Modifier.fillMaxSize().padding(20.dp)){
