@@ -2,6 +2,8 @@ package com.cantar.app
 
 import android.content.Context
 import android.os.Bundle
+import android.content.Intent
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -35,6 +37,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
+import androidx.media3.exoplayer.ExoPlayer
 
 private val bg=Color(0xFF070B20)
 private val panel=Color(0xFF121A39)
@@ -92,6 +97,12 @@ class MainActivity:ComponentActivity(){
  var showExit by remember { mutableStateOf(false) }
  var points by remember { mutableIntStateOf(0) }
  var livePitch by remember { mutableStateOf<PitchAnalyzer.Pitch?>(null) }
+ var selectedAudioUri by remember { mutableStateOf(prefs.getString("selected_audio_uri", null)) }
+ var playerPlaying by remember { mutableStateOf(false) }
+ val player = remember(context) { ExoPlayer.Builder(context).build() }
+ DisposableEffect(player) { onDispose { player.release() } }
+ LaunchedEffect(selectedAudioUri) { selectedAudioUri?.let { player.setMediaItem(MediaItem.fromUri(it)); player.prepare() } }
+ LaunchedEffect(shift) { player.setPlaybackParameters(PlaybackParameters(1f, Math.pow(2.0, shift / 12.0).toFloat())) }
  var duelRound by remember { mutableIntStateOf(1) }
  var firstDuelScore by remember { mutableIntStateOf(0) }
  var secondDuelScore by remember { mutableIntStateOf(0) }
@@ -106,7 +117,11 @@ class MainActivity:ComponentActivity(){
    .putStringSet("favorites",favorites).apply()
  }
  val audioPicker= rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->
-  if(uri!=null){context.contentResolver.takePersistableUriPermission(uri,android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);selected=Song(uri.lastPathSegment?.substringAfterLast('/') ?: "Audio local","Archivo del dispositivo","Por analizar","Importada","Local");shift=0;page=Page.SETUP}
+  if(uri!=null){context.contentResolver.takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION);selectedAudioUri=uri.toString();prefs.edit().putString("selected_audio_uri",uri.toString()).apply();selected=Song(uri.lastPathSegment ?: "Audio local","Archivo del dispositivo","Importada","Importada","Local");shift=0;page=Page.SETUP}
+ }
+ fun openTvCast(){
+  try { context.startActivity(Intent(Settings.ACTION_CAST_SETTINGS)) }
+  catch (_:Exception) { context.startActivity(Intent(Settings.ACTION_DISPLAY_SETTINGS)) }
  }
  fun saveProfile(){
   prefs.edit().putString("profile_name",profileName.trim()).putString("opponent_name",opponent.trim())
@@ -133,6 +148,7 @@ class MainActivity:ComponentActivity(){
      Text("Cantar",fontSize=48.sp,fontWeight=FontWeight.Black);Text("DAR LA NOTA",color=gold,fontSize=20.sp,fontWeight=FontWeight.Bold)
      Spacer(Modifier.height(22.dp));Text(if(profileName.isBlank())"Creá tu perfil para guardar tus resultados" else "Hola, ${profileName}",color=muted)
      HomeButton("♫  Elegir canción",purple){previousPage=Page.HOME;page=Page.LIBRARY}
+     HomeButton("▣  Conectar a Smart TV",Color(0xFF087DBB)){openTvCast()}
      HomeButton("🏆  Solo / Duelo",Color(0xFF08A94E)){page=Page.PROFILE}
      HomeButton("★  Mis Favoritas",Color(0xFFE58B10)){style="Todos";query="";page=Page.LIBRARY}
      HomeButton("▤  Historial y puntuaciones",Color(0xFF126BD9)){page=Page.HISTORY}
@@ -173,17 +189,25 @@ class MainActivity:ComponentActivity(){
     Page.SETUP->Column(Modifier.fillMaxSize().padding(20.dp),horizontalAlignment=Alignment.CenterHorizontally){
      Header("Configurar canción"){page=Page.LIBRARY}
      Spacer(Modifier.height(22.dp));Panel { Text(selected.title,fontSize=23.sp,fontWeight=FontWeight.Bold);Text(selected.artist,color=muted);Text("Tono original: ${selected.key}",color=gold) }
-     Spacer(Modifier.height(22.dp));Text("ELEGIR TONO",color=cyan,fontWeight=FontWeight.Bold)
+     Spacer(Modifier.height(12.dp))
+     if(selectedAudioUri!=null){
+      Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
+       Button(onClick={if(player.isPlaying){player.pause();playerPlaying=false}else{player.play();playerPlaying=true}}){Text(if(player.isPlaying)"Pausar pista" else "▶ Reproducir pista")}
+       OutlinedButton(onClick={openTvCast}){Text("▣ TV")}
+      }
+      Text("Pista local cargada · transposición activa",color=green,fontSize=12.sp)
+     } else { Text("Importá un archivo de audio para reproducirlo y cambiar su tono. El catálogo de muestra no incluye grabaciones.",color=muted,fontSize=12.sp) }
+     Spacer(Modifier.height(10.dp));Text("ELEGIR TONO",color=cyan,fontWeight=FontWeight.Bold)
      Text(if(shift==0)selected.key else "${selected.key}  (${if(shift>0)"+" else ""}$shift)",fontSize=24.sp,color=green,fontWeight=FontWeight.Bold)
      Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){listOf(-2,-1,0,1,2).forEach{n->OutlinedButton({shift=if(n==0)0 else (shift+n).coerceIn(-12,12)}){Text(if(n==0)"Normal" else if(n<0)"Más bajo\n($n)" else "Más alto\n(+$n)")}}}
      Text("Ajuste de −12 a +12 semitonos",color=muted,fontSize=12.sp)
-     Spacer(Modifier.weight(1f));HomeButton("▶  Comenzar a cantar",green){points=0;duelRound=1;firstDuelScore=0;secondDuelScore=0;page=Page.SING}
+     Spacer(Modifier.weight(1f));HomeButton("▶  Comenzar a cantar",green){points=0;duelRound=1;firstDuelScore=0;secondDuelScore=0;if(selectedAudioUri!=null){player.seekTo(0);player.play();playerPlaying=true};page=Page.SING}
     }
     Page.SING->Column(Modifier.fillMaxSize().padding(18.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){
      Text("${selected.title} · ${selected.artist}",fontWeight=FontWeight.Bold)
      Text(if(mode==PlayMode.DUEL) "Turno ${duelRound}: ${if(duelRound==1) profileName.ifBlank{"Jugador 1"} else opponent.ifBlank{"Jugador 2"}}" else "Perfil: ${profileName.ifBlank{"Invitado"}}",color=cyan,fontWeight=FontWeight.Bold)
      Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){ScorePill("PUNTOS",points.toString());ScorePill("MODO",if(mode==PlayMode.SOLO)"SOLO" else "DUELO")}
-     Spacer(Modifier.height(18.dp));Text("AFINACIÓN EN VIVO",color=cyan,fontWeight=FontWeight.Bold)
+     Spacer(Modifier.height(18.dp));Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically){Text("AFINACIÓN EN VIVO",color=cyan,fontWeight=FontWeight.Bold);TextButton(onClick={openTvCast()}){Text("▣ TV",color=cyan)}}
      Text(livePitch?.noteName ?: "Esperando una nota...",color=livePitch?.let{if(kotlin.math.abs(it.cents)<=25)green else gold}?:muted,fontSize=25.sp,fontWeight=FontWeight.Bold)
      key(duelRound){ VocalPitchCapture(onPitch={livePitch=it},onPoints={points=it}) }
      Text("Puntos por mantener la voz afinada (±25 cents). La comparación sincronizada con la melodía original requiere una pista de referencia.",color=muted,fontSize=11.sp)
