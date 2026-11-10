@@ -94,6 +94,11 @@ class MainActivity:ComponentActivity(){
  var bestScore by remember { mutableIntStateOf(prefs.getInt("best_score",0)) }
  var lastScore by remember { mutableIntStateOf(prefs.getInt("last_score",0)) }
  var favorites by remember { mutableStateOf(prefs.getStringSet("favorites", emptySet())?.toSet() ?: emptySet()) }
+ LaunchedEffect(profileName,opponent,mode,selected,shift,favorites){
+  prefs.edit().putString("profile_name",profileName.trim()).putString("opponent_name",opponent.trim())
+   .putString("mode",mode.name).putString("selected_title",selected.title).putInt("transpose",shift)
+   .putStringSet("favorites",favorites).apply()
+ }
  val audioPicker= rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->
   if(uri!=null){context.contentResolver.takePersistableUriPermission(uri,android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);selected=Song(uri.lastPathSegment?.substringAfterLast('/') ?: "Audio local","Archivo del dispositivo","Por analizar","Importada","Local");shift=0;page=Page.SETUP}
  }
