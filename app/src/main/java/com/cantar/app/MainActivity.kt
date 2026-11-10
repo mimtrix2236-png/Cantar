@@ -193,7 +193,7 @@ class MainActivity:ComponentActivity(){
      if(selectedAudioUri!=null){
       Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
        Button(onClick={if(player.isPlaying){player.pause();playerPlaying=false}else{player.play();playerPlaying=true}}){Text(if(player.isPlaying)"Pausar pista" else "▶ Reproducir pista")}
-       OutlinedButton(onClick={openTvCast}){Text("▣ TV")}
+       OutlinedButton(onClick={openTvCast()}){Text("▣ TV")}
       }
       Text("Pista local cargada · transposición activa",color=green,fontSize=12.sp)
      } else { Text("Importá un archivo de audio para reproducirlo y cambiar su tono. El catálogo de muestra no incluye grabaciones.",color=muted,fontSize=12.sp) }
@@ -261,6 +261,6 @@ class MainActivity:ComponentActivity(){
 }
 @Composable private fun Header(title:String,onBack:()->Unit){Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){IconButton(onBack){Icon(Icons.Default.ArrowBack,null)};Text(title,fontSize=21.sp,fontWeight=FontWeight.Bold)}}
 @Composable private fun Panel(content:@Composable ColumnScope.()->Unit){Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(panel).padding(16.dp),content=content)}
-@Composable private fun ModeCard(title:String,subtitle:String,selected:Boolean,modifier:Modifier,onClick:()->Unit){Column(modifier.clip(RoundedCornerShape(16.dp)).background(if(selected)Color(0xFF233A70) else panel).clickable(onClick).padding(13.dp)){Text(title,color=if(selected)cyan else Color.White,fontWeight=FontWeight.Bold);Text(subtitle,color=muted,fontSize=11.sp)}}
+@Composable private fun ModeCard(title:String,subtitle:String,selected:Boolean,modifier:Modifier,onClick:()->Unit){Column(modifier.clip(RoundedCornerShape(16.dp)).background(if(selected)Color(0xFF233A70) else panel).clickable(onClick = onClick).padding(13.dp)){Text(title,color=if(selected)cyan else Color.White,fontWeight=FontWeight.Bold);Text(subtitle,color=muted,fontSize=11.sp)}}
 @Composable private fun ScorePill(label:String,value:String){Column(Modifier.clip(RoundedCornerShape(13.dp)).background(panel).padding(horizontal=16.dp, vertical=9.dp)){Text(label,color=cyan,fontSize=11.sp);Text(value,color=green,fontWeight=FontWeight.Bold,fontSize=20.sp)}}
 @Composable private fun HomeButton(label:String,color:Color,onClick:()->Unit){Button(onClick,Modifier.fillMaxWidth().padding(vertical=5.dp).height(54.dp),colors=ButtonDefaults.buttonColors(containerColor=color),shape=RoundedCornerShape(16.dp)){Text(label,fontWeight=FontWeight.Bold,fontSize=15.sp,color=Color.White)}}
