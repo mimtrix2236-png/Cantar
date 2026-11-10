@@ -73,7 +73,7 @@ private enum class Page{HOME,LIBRARY,SETUP,SING,RESULT}
  var style by remember{mutableStateOf("Todos")}
  var lang by remember{mutableStateOf("Todos")}
  var shift by remember{mutableIntStateOf(0)}
- val import=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->if(uri!=null){selected=Song(uri.lastPathSegment?: "Audio local","Archivo importado","Por analizar","Importada","Local");page=Page.SETUP}}
+ val audioPicker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->if(uri!=null){selected=Song(uri.lastPathSegment?: "Audio local","Archivo importado","Por analizar","Importada","Local");page=Page.SETUP}}
  MaterialTheme(colorScheme=darkColorScheme(background=bg,surface=panel,primary=purple,secondary=cyan)){
   Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF10194A),bg)))){
    when(page){
@@ -84,7 +84,7 @@ private enum class Page{HOME,LIBRARY,SETUP,SING,RESULT}
      Spacer(Modifier.height(16.dp));Text("Tu voz. Tu tono. Tu puntuación.",color=muted)
     }
     Page.LIBRARY->{
-     val filtered=library.filter{(style=="Todos"||it.genre==style)&&(lang=="Todos"||it.lang==lang)&&(it.title.contains(query,true)||it.artist.contains(query,true)||it.genre.contains(query,true))}
+     val filtered=library.filter{(style=="Todos"||it.genre==style)&&(lang=="Todos"||it.lang==lang||(lang=="Otros"&&it.lang !in listOf("Español","Inglés")) )&&(it.title.contains(query,true)||it.artist.contains(query,true)||it.genre.contains(query,true))}
      Column(Modifier.fillMaxSize().padding(15.dp)){
       Row(verticalAlignment=Alignment.CenterVertically){IconButton({page=Page.HOME}){Icon(Icons.Default.ArrowBack,null)};Text("Biblioteca musical",fontSize=22.sp,fontWeight=FontWeight.Bold)}
       OutlinedTextField(query,{query=it},Modifier.fillMaxWidth(),placeholder={Text("Buscar canción, artista o género")},leadingIcon={Icon(Icons.Default.Search,null)},singleLine=true)
@@ -92,7 +92,7 @@ private enum class Page{HOME,LIBRARY,SETUP,SING,RESULT}
       Row(Modifier.horizontalScroll(rememberScrollState())){listOf("Todos","Español","Inglés","Francés","Otros").forEach{FilterChip(lang==it,{lang=it},{Text(it)})}}
       Spacer(Modifier.height(8.dp));Text("ESTILOS MUSICALES",color=cyan,fontSize=12.sp,fontWeight=FontWeight.Bold);Text("Ritmos latinos y géneros de todo el mundo",color=muted,fontSize=12.sp)
       Row(Modifier.horizontalScroll(rememberScrollState()).padding(vertical=7.dp)){styles.forEach{FilterChip(style==it,{style=it},{Text(it,fontSize=12.sp)})}}
-      Row(verticalAlignment=Alignment.CenterVertically){Text(filtered.size.toString()+" pistas de muestra",color=muted,modifier=Modifier.weight(1f));TextButton({import.launch(arrayOf("audio/*"))}){Icon(Icons.Default.LibraryMusic,null);Text(" Importar")}}
+      Row(verticalAlignment=Alignment.CenterVertically){Text(filtered.size.toString()+" pistas de muestra",color=muted,modifier=Modifier.weight(1f));TextButton({audioPicker.launch(arrayOf("audio/*"))}){Icon(Icons.Default.LibraryMusic,null);Text(" Importar")}}
       LazyColumn(verticalArrangement=Arrangement.spacedBy(8.dp)){
        items(filtered){item->Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(panel).clickable{selected=item;shift=0;page=Page.SETUP}.padding(13.dp),verticalAlignment=Alignment.CenterVertically){
         Icon(Icons.Default.MusicNote,null,tint=cyan,modifier=Modifier.size(38.dp));Column(Modifier.weight(1f).padding(horizontal=10.dp)){Text(item.title,fontWeight=FontWeight.Bold);Text(item.artist,color=muted,fontSize=12.sp);Text(item.genre+" · "+item.lang,color=cyan,fontSize=11.sp)};Text(item.key,color=gold,fontSize=11.sp)
