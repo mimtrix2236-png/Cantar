@@ -181,20 +181,33 @@ class MainActivity:ComponentActivity(){
     }
     Page.SING->Column(Modifier.fillMaxSize().padding(18.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){
      Text("${selected.title} · ${selected.artist}",fontWeight=FontWeight.Bold)
+     Text(if(mode==PlayMode.DUEL) "Turno ${duelRound}: ${if(duelRound==1) profileName.ifBlank{"Jugador 1"} else opponent.ifBlank{"Jugador 2"}}" else "Perfil: ${profileName.ifBlank{"Invitado"}}",color=cyan,fontWeight=FontWeight.Bold)
      Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){ScorePill("PUNTOS",points.toString());ScorePill("MODO",if(mode==PlayMode.SOLO)"SOLO" else "DUELO")}
-     Spacer(Modifier.height(20.dp));Text("LÍNEA DE AFINACIÓN",color=cyan,fontWeight=FontWeight.Bold)
-     Text("La captura y evaluación vocal se conectarán al motor de audio en la siguiente etapa.",color=muted)
-     Spacer(Modifier.height(30.dp));Icon(Icons.Default.Mic,null,tint=cyan,modifier=Modifier.size(86.dp));Text("Sesión preparada",color=green,fontWeight=FontWeight.Bold)
-     Spacer(Modifier.height(20.dp));HomeButton("+ 100 puntos de prueba",purple){points+=100}
-     HomeButton("Finalizar sesión",green){
-      lastScore=points;sessions++;if(points>bestScore)bestScore=points
-      prefs.edit().putInt("last_score",lastScore).putInt("best_score",bestScore).putInt("sessions",sessions).apply()
-      page=Page.RESULT
+     Spacer(Modifier.height(18.dp));Text("AFINACIÓN EN VIVO",color=cyan,fontWeight=FontWeight.Bold)
+     Text(livePitch?.noteName ?: "Esperando una nota...",color=livePitch?.let{if(kotlin.math.abs(it.cents)<=25)green else gold}?:muted,fontSize=25.sp,fontWeight=FontWeight.Bold)
+     key(duelRound){ VocalPitchCapture(onPitch={livePitch=it},onPoints={points=it}) }
+     Text("Puntos por mantener la voz afinada (±25 cents). La comparación sincronizada con la melodía original requiere una pista de referencia.",color=muted,fontSize=11.sp)
+     Spacer(Modifier.height(10.dp))
+     HomeButton(if(mode==PlayMode.DUEL && duelRound==1) "Finalizar turno 1" else "Finalizar sesión",green){
+      if(mode==PlayMode.DUEL && duelRound==1){
+       firstDuelScore=points;duelRound=2;points=0;livePitch=null
+      } else {
+       if(mode==PlayMode.DUEL) secondDuelScore=points
+       lastScore=if(mode==PlayMode.DUEL) maxOf(firstDuelScore,secondDuelScore) else points
+       sessions++;if(lastScore>bestScore)bestScore=lastScore
+       if(mode==PlayMode.DUEL){
+        val winner=if(firstDuelScore>secondDuelScore) profileName.ifBlank{"Jugador 1"} else if(secondDuelScore>firstDuelScore) opponent.ifBlank{"Jugador 2"} else "Empate"
+        duelHistory=(duelHistory+"\n"+winner+": "+firstDuelScore+" - "+secondDuelScore).takeLast(3000)
+        prefs.edit().putString("duel_history",duelHistory).apply()
+       }
+       prefs.edit().putInt("last_score",lastScore).putInt("best_score",bestScore).putInt("sessions",sessions).apply()
+       page=Page.RESULT
+      }
      }
     }
     Page.RESULT->Column(Modifier.fillMaxSize().padding(22.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){
      Icon(Icons.Default.EmojiEvents,null,tint=gold,modifier=Modifier.size(90.dp));Text("¡Resultado!",fontSize=30.sp,fontWeight=FontWeight.Bold)
-     Text(lastScore.toString(),fontSize=52.sp,color=green,fontWeight=FontWeight.Black);Text("puntos · ${if(mode==PlayMode.SOLO)"Partida individual" else "Duelo"}",color=muted)
+     Text(if(mode==PlayMode.DUEL) "${firstDuelScore}  —  ${secondDuelScore}" else lastScore.toString(),fontSize=52.sp,color=green,fontWeight=FontWeight.Black);Text("puntos · ${if(mode==PlayMode.SOLO)"Partida individual" else "Duelo"}",color=muted)
      if(mode==PlayMode.DUEL){Text("${profileName.ifBlank{"Jugador 1"}}  vs  ${opponent.ifBlank{"Jugador 2"}}",color=cyan);Text("Resultado del duelo: ${firstDuelScore} - ${secondDuelScore}",color=gold);Text(if(firstDuelScore>secondDuelScore) "Ganó ${profileName.ifBlank{"Jugador 1"}}" else if(secondDuelScore>firstDuelScore) "Ganó ${opponent.ifBlank{"Jugador 2"}}" else "Empate",color=green);Text("Historial local guardado",color=muted,fontSize=12.sp)}
      Text("Mejor marca: $bestScore · Sesiones: $sessions",color=gold)
      HomeButton("Volver al menú",green){page=Page.HOME};HomeButton("Otra canción",purple){page=Page.LIBRARY}
