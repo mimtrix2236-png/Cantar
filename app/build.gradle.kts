@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.cantar.app"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.cantar.app"
         minSdk = 26
