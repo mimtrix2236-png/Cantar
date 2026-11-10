@@ -198,9 +198,15 @@ class MainActivity:ComponentActivity(){
        if(mode==PlayMode.DUEL){
         val winner=if(firstDuelScore>secondDuelScore) profileName.ifBlank{"Jugador 1"} else if(secondDuelScore>firstDuelScore) opponent.ifBlank{"Jugador 2"} else "Empate"
         duelHistory=(duelHistory+"\n"+winner+": "+firstDuelScore+" - "+secondDuelScore).takeLast(3000)
-        prefs.edit().putString("duel_history",duelHistory).apply()
+        prefs.edit()
+         .putString("duel_history",duelHistory)
+         .putInt("profile_best_"+profileName.trim().ifBlank{"Jugador 1"}, maxOf(prefs.getInt("profile_best_"+profileName.trim().ifBlank{"Jugador 1"},0), firstDuelScore))
+         .putInt("profile_best_"+opponent.trim().ifBlank{"Jugador 2"}, maxOf(prefs.getInt("profile_best_"+opponent.trim().ifBlank{"Jugador 2"},0), secondDuelScore))
+         .apply()
        }
-       prefs.edit().putInt("last_score",lastScore).putInt("best_score",bestScore).putInt("sessions",sessions).apply()
+       prefs.edit().putInt("last_score",lastScore).putInt("best_score",bestScore).putInt("sessions",sessions)
+        .putInt("profile_best_"+profileName.trim().ifBlank{"Invitado"}, maxOf(prefs.getInt("profile_best_"+profileName.trim().ifBlank{"Invitado"},0), if(mode==PlayMode.DUEL) firstDuelScore else points))
+        .apply()
        page=Page.RESULT
       }
      }
