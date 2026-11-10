@@ -214,7 +214,7 @@ class MainActivity:ComponentActivity(){
      Spacer(Modifier.height(10.dp))
      HomeButton(if(mode==PlayMode.DUEL && duelRound==1) "Finalizar turno 1" else "Finalizar sesión",green){
       if(mode==PlayMode.DUEL && duelRound==1){
-       firstDuelScore=points;duelRound=2;points=0;livePitch=null
+       firstDuelScore=points;duelRound=2;points=0;livePitch=null;if(selectedAudioUri!=null){player.seekTo(0);player.play();playerPlaying=true}
       } else {
        if(mode==PlayMode.DUEL) secondDuelScore=points
        lastScore=if(mode==PlayMode.DUEL) maxOf(firstDuelScore,secondDuelScore) else points
