@@ -97,11 +97,11 @@ class MainActivity:ComponentActivity(){
 
 @Composable private fun Cantar(onExit:()->Unit){
  val context= LocalContext.current
+ val prefs= remember { context.getSharedPreferences("cantar_local_profile",Context.MODE_PRIVATE) }
+ var page by remember { mutableStateOf(Page.HOME) }
  LaunchedEffect(page) {
   (context as? Activity)?.requestedOrientation = if (page == Page.SING) ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
  }
- val prefs= remember { context.getSharedPreferences("cantar_local_profile",Context.MODE_PRIVATE) }
- var page by remember { mutableStateOf(Page.HOME) }
  var previousPage by remember { mutableStateOf(Page.HOME) }
  var selected by remember { mutableStateOf(library[6]) }
  var query by remember { mutableStateOf("") }
