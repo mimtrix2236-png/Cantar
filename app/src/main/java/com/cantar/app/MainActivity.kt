@@ -1,6 +1,8 @@
 package com.cantar.app
 
 import android.content.Context
+import android.app.Activity
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.content.Intent
 import android.provider.Settings
@@ -86,6 +88,7 @@ private fun parseLrc(raw: String): List<LyricLine> {
   val fraction = match.groupValues[3].padEnd(3, '0').take(3).toLongOrNull() ?: 0L
   LyricLine((min * 60 + sec) * 1000 + fraction, match.groupValues[4].trim())
  }.sortedBy { it.timeMs }
+ .toList()
 }
 
 class MainActivity:ComponentActivity(){
@@ -94,6 +97,9 @@ class MainActivity:ComponentActivity(){
 
 @Composable private fun Cantar(onExit:()->Unit){
  val context= LocalContext.current
+ LaunchedEffect(page) {
+  (context as? Activity)?.requestedOrientation = if (page == Page.SING) ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+ }
  val prefs= remember { context.getSharedPreferences("cantar_local_profile",Context.MODE_PRIVATE) }
  var page by remember { mutableStateOf(Page.HOME) }
  var previousPage by remember { mutableStateOf(Page.HOME) }
