@@ -44,13 +44,16 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.exoplayer.ExoPlayer
 
-private val bg=Color(0xFF070B20)
-private val panel=Color(0xFF121A39)
-private val purple=Color(0xFF8B35F4)
-private val cyan=Color(0xFF19D8FF)
-private val green=Color(0xFF22E66B)
-private val gold=Color(0xFFFFD43B)
+private val bg=Color(0xFF05091E)
+private val panel=Color(0xFF101733)
+private val purple=Color(0xFF8B20F5)
+private val cyan=Color(0xFF00DFFF)
+private val green=Color(0xFF16E34F)
+private val gold=Color(0xFFFFD900)
 private val muted=Color(0xFF9BA8C8)
+private val magenta=Color(0xFFE52CFF)
+private val orange=Color(0xFFFF8C00)
+private val electricBlue=Color(0xFF087DFF)
 
 private data class Song(val title:String,val artist:String,val key:String,val genre:String,val lang:String)
 private val library=listOf(
@@ -169,18 +172,18 @@ class MainActivity:ComponentActivity(){
  BackHandler(enabled=true){if(page==Page.HOME)showExit=true else goBack()}
 
  MaterialTheme(colorScheme=darkColorScheme(background=bg,surface=panel,primary=purple,secondary=cyan)){
-  Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF10194A),bg)))){
+  Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF111A4B),bg)))){
    when(page){
     Page.HOME->Column(Modifier.fillMaxSize().padding(22.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){
      Box(Modifier.size(142.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Color(0xFF00D9FF),purple,Color(0xFFE735D4)))),contentAlignment=Alignment.Center){Icon(Icons.Default.Mic,null,tint=Color.White,modifier=Modifier.size(88.dp))}
      Text("Cantar",fontSize=48.sp,fontWeight=FontWeight.Black);Text("DAR LA NOTA",color=gold,fontSize=22.sp,fontWeight=FontWeight.ExtraBold)
      Spacer(Modifier.height(22.dp));Text(if(profileName.isBlank())"Creá tu perfil para guardar tus resultados" else "Hola, ${profileName}",color=muted)
-     HomeButton("♫  Elegir canción",purple){previousPage=Page.HOME;page=Page.LIBRARY}
-     HomeButton("▣  Conectar a Smart TV",Color(0xFF087DBB)){openTvCast()}
-     HomeButton("🏆  Solo / Duelo",Color(0xFF08A94E)){page=Page.PROFILE}
-     HomeButton("★  Mis Favoritas",Color(0xFFE58B10)){style="Todos";query="";page=Page.LIBRARY}
-     HomeButton("▤  Historial y puntuaciones",Color(0xFF126BD9)){page=Page.HISTORY}
-     HomeButton("⚙  Configuración",Color(0xFF34446D)){page=Page.SETTINGS}
+     HomeButton("♫  Elegir canción",Brush.horizontalGradient(listOf(purple,magenta))){previousPage=Page.HOME;page=Page.LIBRARY}
+     HomeButton("▣  Conectar a Smart TV",Brush.horizontalGradient(listOf(electricBlue,cyan))){openTvCast()}
+     HomeButton("🏆  Solo / Duelo",Brush.horizontalGradient(listOf(Color(0xFF00C853),green))){page=Page.PROFILE}
+     HomeButton("★  Mis Favoritas",Brush.horizontalGradient(listOf(orange,Color(0xFFFF5A00)))){style="Todos";query="";page=Page.LIBRARY}
+     HomeButton("▤  Historial y puntuaciones",Brush.horizontalGradient(listOf(electricBlue,Color(0xFF165DDB)))){page=Page.HISTORY}
+     HomeButton("⚙  Configuración",Brush.horizontalGradient(listOf(Color(0xFF087DFF),Color(0xFF1646C8)))){page=Page.SETTINGS}
      Spacer(Modifier.height(10.dp));Text("Tu voz. Tu tono. Tu puntuación.",color=muted)
     }
     Page.PROFILE->Column(Modifier.fillMaxSize().padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
@@ -303,4 +306,4 @@ class MainActivity:ComponentActivity(){
 @Composable private fun Panel(content:@Composable ColumnScope.()->Unit){Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(panel).padding(16.dp),content=content)}
 @Composable private fun ModeCard(title:String,subtitle:String,selected:Boolean,modifier:Modifier,onClick:()->Unit){Column(modifier.clip(RoundedCornerShape(16.dp)).background(if(selected)Color(0xFF233A70) else panel).clickable(onClick = onClick).padding(13.dp)){Text(title,color=if(selected)cyan else Color.White,fontWeight=FontWeight.Bold);Text(subtitle,color=muted,fontSize=11.sp)}}
 @Composable private fun ScorePill(label:String,value:String){Column(Modifier.clip(RoundedCornerShape(13.dp)).background(panel).padding(horizontal=16.dp, vertical=9.dp)){Text(label,color=cyan,fontSize=11.sp);Text(value,color=green,fontWeight=FontWeight.Bold,fontSize=20.sp)}}
-@Composable private fun HomeButton(label:String,color:Color,onClick:()->Unit){Button(onClick,Modifier.fillMaxWidth().padding(vertical=5.dp).height(54.dp),colors=ButtonDefaults.buttonColors(containerColor=color),shape=RoundedCornerShape(16.dp)){Text(label,fontWeight=FontWeight.Bold,fontSize=15.sp,color=Color.White)}}
+@Composable private fun HomeButton(label:String,brush:Brush,onClick:()->Unit){Box(Modifier.fillMaxWidth().padding(vertical=5.dp).height(54.dp).clip(RoundedCornerShape(16.dp)).background(brush).clickable(onClick=onClick),contentAlignment=Alignment.Center){Text(label,fontWeight=FontWeight.Bold,fontSize=15.sp,color=Color.White)}}
