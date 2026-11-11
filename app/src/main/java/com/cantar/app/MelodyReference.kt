@@ -97,11 +97,16 @@ object MelodyReferenceParser {
 }
 
 class MelodyScorer(
-    private val notes: List<ReferenceNote>,
+    referenceNotes: List<ReferenceNote>,
+    transposeSemitones: Int = 0,
     private val toleranceCents: Float = 50f
 ) {
+    private val notes = referenceNotes.map {
+        it.copy(midiNote = (it.midiNote + transposeSemitones).coerceIn(0, 127))
+    }
     private val samples = Array(notes.size) { mutableListOf<Float>() }
     private val scores = mutableListOf<NoteScore>()
+    private val finalized = BooleanArray(notes.size)
     private var nextToFinalize = 0
     private var lastSampleAtMs = Long.MIN_VALUE
 
@@ -153,7 +158,8 @@ class MelodyScorer(
     }
 
     private fun finalize(index: Int) {
-        if (scores.any { it.noteIndex == index }) return
+        if (finalized[index]) return
+        finalized[index] = true
         val values = samples[index].map { abs(it) }.sorted()
         val median = when {
             values.isEmpty() -> null
@@ -161,7 +167,7 @@ class MelodyScorer(
             else -> (values[values.size / 2 - 1] + values[values.size / 2]) / 2f
         }
         val points = if (median == null) 0 else {
-            ((1f - median / toleranceCents).coerceIn(0f, 1f) * 100f).roundToInt()
+            ((1f - median / (toleranceCents * 2f)).coerceIn(0f, 1f) * 100f).roundToInt()
         }
         scores.add(
             NoteScore(
