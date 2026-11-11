@@ -75,6 +75,7 @@ fun VocalPitchCapture(
                 val readBuffer = ShortArray(2_048)
                 val frame = ShortArray(4_096)
                 var frameCount = 0
+                var readFailed = false
 
                 audioRecord.startRecording()
                 while (isActive) {
@@ -99,11 +100,11 @@ fun VocalPitchCapture(
                             }
                         }
                         count == 0 -> delay(6)
-                        count < 0 -> break
+                        count < 0 -> { readFailed = true; break }
                         else -> delay(10)
                     }
                 }
-                true
+                !readFailed
             } catch (_: SecurityException) {
                 false
             } catch (_: IllegalStateException) {
