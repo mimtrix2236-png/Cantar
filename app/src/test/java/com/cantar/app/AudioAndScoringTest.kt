@@ -50,7 +50,7 @@ class MelodyReferenceTest {
     @Test
     fun appliesFiftyCentToleranceToEachNote() {
         val notes = MelodyReferenceParser.parseCsv(
-            "start_ms,duration_ms,midi_note\\n0,250,69\\n300,250,69"
+            "start_ms,duration_ms,midi_note\n0,250,69\n300,250,69"
         )
         val scorer = MelodyScorer(notes)
         scorer.observe(100, PitchAnalyzer.Pitch(440f, 69, "La 4", 50, 0.99f))
