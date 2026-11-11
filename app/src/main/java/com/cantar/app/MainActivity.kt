@@ -143,7 +143,7 @@ class MainActivity:ComponentActivity(){
  var searchingOnline by remember { mutableStateOf(false) }
  var style by remember { mutableStateOf("Todos") }
  var lang by remember { mutableStateOf("Todos") }
- var shift by remember { mutableIntStateOf(0) }
+ var shift by remember { mutableIntStateOf(prefs.getInt("transpose",0).coerceIn(-12,12)) }
  var profileName by remember { mutableStateOf(prefs.getString("profile_name","") ?: "") }
  var opponent by remember { mutableStateOf(prefs.getString("opponent_name","") ?: "") }
  var mode by remember { mutableStateOf(if(prefs.getString("mode","SOLO")=="DUEL") PlayMode.DUEL else PlayMode.SOLO) }
@@ -195,7 +195,8 @@ class MainActivity:ComponentActivity(){
  var scoreSnapshot by remember { mutableStateOf(ScoringSnapshot(totalNotes=referenceNotes.size)) }
  var scoringAvailable by remember { mutableStateOf(false) }
  var playbackStarted by remember { mutableStateOf(false) }
- val scorer=remember(referenceNotes,duelRound){MelodyScorer(referenceNotes)}
+ val scorer=remember(referenceNotes,duelRound,shift){MelodyScorer(referenceNotes,shift)}
+ val displayReferenceNotes=remember(referenceNotes,shift){referenceNotes.map{it.copy(midiNote=(it.midiNote+shift).coerceIn(0,127))}}
  LaunchedEffect(profileName,opponent,mode,selected,shift,favorites){
   prefs.edit().putString("profile_name",profileName.trim()).putString("opponent_name",opponent.trim())
    .putString("mode",mode.name).putString("selected_title",selected.title)
@@ -242,6 +243,7 @@ class MainActivity:ComponentActivity(){
     val displayName=uri.lastPathSegment?.substringAfterLast('/')?.substringAfterLast(':') ?: "Audio local"
     selected=Song(displayName,"Archivo local","No verificada","Audio local","Local")
    }
+   playbackStarted=false
    audioError=""
    shift=0
    page=Page.SETUP
@@ -272,7 +274,7 @@ class MainActivity:ComponentActivity(){
   page=Page.SETUP
  }
  fun finishRound(){
-  val canScore=selectedAudioUri!=null && referenceNotes.isNotEmpty() && playbackStarted
+  val canScore=selectedAudioUri!=null && referenceNotes.isNotEmpty() && playbackStarted && player.currentPosition>0L
   scoreSnapshot=if(canScore) scorer.finish() else ScoringSnapshot(totalNotes=referenceNotes.size)
   points=if(canScore) scoreSnapshot.totalPoints else 0
   player.pause()
@@ -284,6 +286,7 @@ class MainActivity:ComponentActivity(){
    scoreSnapshot=ScoringSnapshot(totalNotes=referenceNotes.size)
    livePitch=null
    pitchTrace=emptyList()
+   currentPositionMs=0L
    player.seekTo(0)
    player.play()
    playerPlaying=true
@@ -319,6 +322,7 @@ class MainActivity:ComponentActivity(){
    .putString("mode",mode.name).putStringSet("favorites",favorites).apply()
  }
  fun goBack(){
+  if(page==Page.SING){player.pause();playerPlaying=false}
   page=when(page){
    Page.HOME->{showExit=true;Page.HOME}
    Page.PROFILE->Page.HOME
@@ -405,6 +409,7 @@ class MainActivity:ComponentActivity(){
       try { context.startActivity(Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://www.youtube.com/results?search_query=$terms"))) } catch (_:Exception) {}
      },modifier=Modifier.fillMaxWidth(),colors=ButtonDefaults.buttonColors(containerColor=purple)){Text("▶ Buscar pista karaoke en YouTube",fontWeight=FontWeight.Bold)}
      Text("Se abre la búsqueda oficial de YouTube; elegí un video karaoke. LRCLIB aporta la letra, pero no el audio.",color=muted,fontSize=11.sp)
+     OutlinedButton(onClick={audioPicker.launch(arrayOf("audio/*"))},modifier=Modifier.fillMaxWidth()){Text(if(selectedAudioUri==null)"Importar pista de audio" else "Cambiar pista de audio")}
      if(audioError.isNotBlank())Text(audioError,color=gold,fontSize=11.sp)
      OutlinedButton(onClick={referencePicker.launch(arrayOf("text/csv","text/plain","application/octet-stream"))},modifier=Modifier.fillMaxWidth()){Text("Importar melodía de referencia (.CSV)")}
      Text(if(referenceNotes.isEmpty())"Sin melodía de referencia: no se calcularán puntos por nota." else "Melodía cargada: ${referenceNotes.size} notas · puntuación nota por nota activa.",color=if(referenceNotes.isEmpty())gold else green,fontSize=11.sp)
@@ -427,7 +432,7 @@ class MainActivity:ComponentActivity(){
      Text("Ajuste de −12 a +12 semitonos",color=muted,fontSize=12.sp)
      Spacer(Modifier.weight(1f));HomeButton("▶  Comenzar a cantar",green){
       points=0;duelRound=1;firstDuelScore=0;secondDuelScore=0;scoreSnapshot=ScoringSnapshot(totalNotes=referenceNotes.size)
-      pitchTrace=emptyList();livePitch=null;scoringAvailable=false;playbackStarted=false
+      pitchTrace=emptyList();livePitch=null;scoringAvailable=false;playbackStarted=false;currentPositionMs=0L
       if(selectedAudioUri!=null){player.seekTo(0);player.play();playerPlaying=true;playbackStarted=true}
       page=Page.SING
      }
@@ -450,7 +455,7 @@ class MainActivity:ComponentActivity(){
        Text(currentLyric,fontSize=if(compact)17.sp else 24.sp,fontWeight=FontWeight.ExtraBold,color=Color.White,maxLines=1)
        if(nextLyric.isNotBlank())Text(nextLyric,color=muted,fontSize=if(compact)11.sp else 15.sp,maxLines=1)
       }
-      MelodyPitchChart(referenceNotes,pitchTrace,currentPositionMs,Modifier.fillMaxWidth())
+      MelodyPitchChart(displayReferenceNotes,pitchTrace,currentPositionMs,Modifier.fillMaxWidth())
       Row(Modifier.weight(1f).fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){
        Panel(Modifier.weight(1f).fillMaxHeight()){
         Text("NOTAS OBJETIVO",color=cyan,fontWeight=FontWeight.Bold,fontSize=if(compact)10.sp else 12.sp)
