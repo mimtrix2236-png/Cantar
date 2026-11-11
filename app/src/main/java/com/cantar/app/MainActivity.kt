@@ -180,7 +180,7 @@ class MainActivity:ComponentActivity(){
  LaunchedEffect(query) {
   if (query.trim().length < 3) { remoteTracks = emptyList(); searchingOnline = false; remoteError="" }
   else {
-   delay(450)
+   delay(700)
    searchingOnline = true
    remoteError=""
    remoteTracks = try { LrclibClient.search(query) }
