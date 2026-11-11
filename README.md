@@ -59,13 +59,13 @@ El botón de TV abre los ajustes de transmisión de pantalla de Android. La dupl
 
 ## Compilar
 
-Abrir el proyecto en Android Studio y ejecutar:
+Abrir el proyecto en Android Studio y ejecutar la tarea `:app:assembleDebug` desde la ventana Gradle. Este repositorio todavía no incluye los scripts `gradlew`; desde una terminal con Gradle 8.13 instalado se puede ejecutar:
 
 ```bash
-./gradlew :app:assembleDebug
+gradle :app:testDebugUnitTest :app:assembleDebug
 ```
 
-GitHub Actions ejecuta `:app:testDebugUnitTest` y `:app:assembleDebug` en cada push a `main`. Las pruebas unitarias cubren una señal de 440 Hz, silencio, importación CSV, tolerancia de afinación y transposición. La existencia de un workflow no sustituye las pruebas en un teléfono real.
+GitHub Actions ejecuta `:app:testDebugUnitTest` y `:app:assembleDebug` en cada push a `main`, sin publicar ni adjuntar el APK como artefacto. Las pruebas unitarias cubren una señal de 440 Hz, silencio, importación CSV, tolerancia de afinación y transposición. La existencia de un workflow no sustituye las pruebas en un teléfono real.
 
 ## Alcance y limitaciones conocidas
 
