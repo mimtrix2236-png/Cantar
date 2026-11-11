@@ -65,7 +65,7 @@ Abrir el proyecto en Android Studio y ejecutar la tarea `:app:assembleDebug` des
 gradle :app:testDebugUnitTest :app:assembleDebug
 ```
 
-GitHub Actions ejecuta `:app:testDebugUnitTest` y `:app:assembleDebug` en cada push a `main`, sin publicar ni adjuntar el APK como artefacto. Las pruebas unitarias cubren una señal de 440 Hz, silencio, importación CSV, tolerancia de afinación y transposición. La existencia de un workflow no sustituye las pruebas en un teléfono real.
+GitHub Actions ejecuta `:app:testDebugUnitTest` y `:app:assembleDebug` en cada push a `main`, sin publicar ni adjuntar el APK como artefacto. Las pruebas unitarias cubren una señal de 440 Hz, una fundamental con segundo armónico más fuerte, silencio, importación CSV, tolerancia de afinación y transposición. La existencia de un workflow no sustituye las pruebas en un teléfono real.
 
 ## Alcance y limitaciones conocidas
 
