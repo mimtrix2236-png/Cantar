@@ -1,32 +1,81 @@
 # Cantar — Dar la Nota
 
-Aplicación Android de karaoke y entrenamiento vocal, con identidad visual oscura y acentos neón.
+Aplicación Android nativa de karaoke y entrenamiento vocal, con interfaz azul oscuro y acentos neón.
 
-## Incluido en esta primera base
+## Funciones disponibles en esta base
 
-- Proyecto Android nativo con Kotlin y Jetpack Compose.
-- Pantalla de inicio y marca Cantar.
-- Biblioteca de demostración con filtros por estilo e idioma y búsqueda por canción, artista o género.
-- Predominio de géneros latinoamericanos: rock nacional, pop latino, cumbia, cuarteto, salsa, bachata, merengue, vallenato, tango, folklore, reguetón y urbano latino.
-- Catálogo de estilos internacionales: pop, rock, metal, grunge, jazz, blues, R&B, hip-hop, rap, reggae, electrónica, dance, disco, country, indie, funk, gospel, chanson, K-pop, J-pop, afrobeats, flamenco y clásica.
-- Selector inicial de archivos de audio del dispositivo.
-- Pantalla de preparación con tono original y controles de transposición de semitonos.
-- Pantallas iniciales de práctica y resultados.
+- Interfaz Android con Jetpack Compose, navegación atrás y confirmación de salida.
+- Perfiles locales, favoritos, modo Solo y modo Duelo por turnos en un solo teléfono.
+- Biblioteca de ejemplos con filtros por idioma y géneros latinoamericanos e internacionales. Los ejemplos no incluyen grabaciones ni licencias.
+- Búsqueda de letras en LRCLIB sin API key. LRCLIB proporciona metadatos y letras; no entrega audio.
+- Búsqueda externa de pistas karaoke en YouTube. La app abre la búsqueda, pero no extrae ni reproduce el audio de YouTube.
+- Importación de archivos de audio propios mediante el selector de documentos de Android.
+- Reproducción local con AndroidX Media3 ExoPlayer.
+- Transposición de -12 a +12 semitonos mediante PlaybackParameters, manteniendo speed = 1.0 y modificando el factor de pitch.
+- Captura de micrófono con AudioRecord y estimación de frecuencia fundamental mediante YIN.
+- Importación de una melodía de referencia monofónica CSV, sincronizada por milisegundos desde el inicio del archivo de audio.
+- Gráfico de notas objetivo y trazo vocal; indicador verde dentro de ±50 cents y ámbar fuera de tolerancia.
+- Puntuación de hasta 100 puntos por nota, calculada a partir del error mediano de afinación de las muestras detectadas.
+- Historial y mejores marcas guardados localmente.
 
-## Importante: alcance actual
+## Preparar una sesión puntuable
 
-Los títulos y tonalidades del catálogo son datos de demostración, no una biblioteca musical licenciada ni una conexión a un servicio de streaming. El selector de archivos está integrado como punto de partida, pero la decodificación, reproducción, análisis de la melodía y transposición real del audio todavía deben implementarse. La detección de voz sincronizada, la puntuación fiable y las competencias multijugador también son etapas pendientes. No se debe interpretar la pantalla de práctica actual como un afinador o evaluador terminado.
+Para que la puntuación sea real y no una estimación inventada, hacen falta dos archivos del mismo arreglo:
 
-## Requisitos
+1. Un archivo de audio que el usuario tenga derecho a reproducir.
+2. Una referencia melódica CSV con tiempos relativos al comienzo de ese audio.
 
-- Android Studio reciente
-- JDK 17
-- Android SDK 35
+Formato requerido:
+
+```csv
+start_ms,duration_ms,midi_note
+0,420,60
+500,300,62
+850,500,64
+```
+
+Las tres filas numéricas anteriores son un ejemplo didáctico de formato, no corresponden a ninguna canción. La app no incluye melodías precargadas ni atribuye esos datos a canciones del catálogo.
+
+- `start_ms`: comienzo de la nota desde el inicio del audio.
+- `duration_ms`: duración de la nota.
+- `midi_note`: número MIDI entero entre 0 y 127.
+- Las notas deben estar ordenadas y no superponerse.
+- También se acepta el encabezado `start_ms,end_ms,midi_note`.
+
+Al importar el CSV, Cantar ajusta las notas objetivo con la misma transposición aplicada al audio. Si falta el audio o la referencia, la aplicación no presenta una puntuación como si fuera una evaluación real.
+
+## Compatibilidad y permisos
+
+- Android mínimo: API 26.
+- Compilación: JDK 17, Android Gradle Plugin y Gradle 8.13.
+- compileSdk: Android 36.
+- `RECORD_AUDIO`: se solicita en tiempo de ejecución al activar el micrófono.
+- `INTERNET`: búsqueda de letras en LRCLIB.
+- Los archivos se seleccionan mediante Storage Access Framework; no se solicita acceso general al almacenamiento.
+
+## Smart TV
+
+El botón de TV abre los ajustes de transmisión de pantalla de Android. La duplicación depende de la compatibilidad del teléfono y del televisor. Todavía no hay un receptor Google Cast propio ni una segunda interfaz de TV independiente.
 
 ## Compilar
 
-Abrir el proyecto en Android Studio y ejecutar `:app:assembleDebug`.
+Abrir el proyecto en Android Studio y ejecutar:
+
+```bash
+./gradlew :app:assembleDebug
+```
+
+GitHub Actions también ejecuta `:app:assembleDebug` en cada push a `main`. La existencia de un workflow no sustituye las pruebas en un teléfono real.
+
+## Alcance y limitaciones conocidas
+
+- El catálogo local es una lista de ejemplos para filtros; no representa un catálogo mundial ni una biblioteca musical licenciada.
+- LRCLIB puede no tener letra sincronizada para una canción; una letra sin tiempos no permite sincronizar el karaoke.
+- La melodía de referencia se debe proporcionar en CSV; no se infiere automáticamente desde el audio ni desde la letra.
+- YIN estima una frecuencia fundamental monofónica; voces superpuestas, acompañamiento fuerte, reverberación y micrófonos distintos pueden afectar la precisión.
+- La puntuación debe validarse con canciones y dispositivos reales antes de considerarse definitiva.
+- Los perfiles y resultados son locales al dispositivo; no hay cuentas en la nube ni duelo online.
 
 ## Privacidad
 
-El permiso de micrófono se solicitará cuando se integre la captura de voz. El análisis debe ejecutarse localmente siempre que sea posible y explicar claramente cualquier uso de audio.
+La captura de voz se procesa localmente mediante AudioRecord. El audio no se sube a LRCLIB ni a YouTube desde el analizador vocal.
