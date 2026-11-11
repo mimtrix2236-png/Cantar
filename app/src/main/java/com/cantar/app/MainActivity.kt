@@ -6,6 +6,7 @@ import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.content.Intent
 import android.provider.Settings
+import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -108,6 +109,8 @@ class MainActivity:ComponentActivity(){
  var previousPage by remember { mutableStateOf(Page.HOME) }
  var selected by remember { mutableStateOf(library[6]) }
  var query by remember { mutableStateOf("") }
+ var remoteTracks by remember { mutableStateOf(emptyList<LrclibTrack>()) }
+ var searchingOnline by remember { mutableStateOf(false) }
  var style by remember { mutableStateOf("Todos") }
  var lang by remember { mutableStateOf("Todos") }
  var shift by remember { mutableIntStateOf(0) }
@@ -124,6 +127,15 @@ class MainActivity:ComponentActivity(){
  val player = remember(context) { ExoPlayer.Builder(context).build() }
  DisposableEffect(player) { onDispose { player.release() } }
  LaunchedEffect(selectedAudioUri) { selectedAudioUri?.let { player.setMediaItem(MediaItem.fromUri(it)); player.prepare() } }
+ LaunchedEffect(query) {
+  if (query.trim().length < 3) { remoteTracks = emptyList(); searchingOnline = false }
+  else {
+   delay(450)
+   searchingOnline = true
+   remoteTracks = try { LrclibClient.search(query) } catch (_: Exception) { emptyList() }
+   searchingOnline = false
+  }
+ }
  LaunchedEffect(shift) { player.setPlaybackParameters(PlaybackParameters(1f, Math.pow(2.0, shift / 12.0).toFloat())) }
  var duelRound by remember { mutableIntStateOf(1) }
  var firstDuelScore by remember { mutableIntStateOf(0) }
@@ -208,8 +220,13 @@ class MainActivity:ComponentActivity(){
       Row(Modifier.horizontalScroll(rememberScrollState())){listOf("Todos","Español","Inglés","Francés","Otros").forEach{FilterChip(lang==it,{lang=it},{Text(it)})}}
       Text("ESTILOS MUSICALES",color=cyan,fontSize=12.sp,fontWeight=FontWeight.Bold)
       Row(Modifier.horizontalScroll(rememberScrollState()).padding(vertical=5.dp)){styles.forEach{FilterChip(style==it,{style=it},{Text(it,fontSize=12.sp)})}}
-      Row(verticalAlignment=Alignment.CenterVertically){Text("${filtered.size} pistas de muestra",color=muted,modifier=Modifier.weight(1f));TextButton({audioPicker.launch(arrayOf("audio/*"))}){Icon(Icons.Default.LibraryMusic,null);Text(" Importar")}}
+      Row(verticalAlignment=Alignment.CenterVertically){Text(if(searchingOnline)"Buscando letras online…" else "${remoteTracks.size} coincidencias LRCLIB · ${filtered.size} ejemplos",color=muted,modifier=Modifier.weight(1f));TextButton({audioPicker.launch(arrayOf("audio/*"))}){Icon(Icons.Default.LibraryMusic,null);Text(" Importar")}}
       LazyColumn(verticalArrangement=Arrangement.spacedBy(8.dp)){
+       items(remoteTracks,key={ "lrc-${it.id}" }){track->Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(panel).clickable{
+        selected=Song(track.trackName,track.artistName,"Online","Catálogo online","");selectedAudioUri=null;player.stop();playerPlaying=false;shift=0;lyricLines=parseLrc(track.syncedLyrics.orEmpty());page=Page.SETUP
+       }.padding(12.dp),verticalAlignment=Alignment.CenterVertically){
+        Icon(Icons.Default.MusicNote,null,tint=green,modifier=Modifier.size(34.dp));Column(Modifier.weight(1f).padding(horizontal=10.dp)){Text(track.trackName,fontWeight=FontWeight.Bold);Text(track.artistName,color=muted,fontSize=12.sp);Text(if(track.syncedLyrics!=null)"Letra sincronizada disponible" else if(track.plainLyrics!=null)"Letra disponible (sin tiempos)" else "Sin letra disponible",color=cyan,fontSize=11.sp)};Text("ONLINE",color=green,fontSize=10.sp)
+       }}
        items(filtered){item->Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(panel).clickable{selected=item;shift=0;page=Page.SETUP}.padding(12.dp),verticalAlignment=Alignment.CenterVertically){
         Icon(Icons.Default.MusicNote,null,tint=cyan,modifier=Modifier.size(34.dp));Column(Modifier.weight(1f).padding(horizontal=10.dp)){Text(item.title,fontWeight=FontWeight.Bold);Text(item.artist,color=muted,fontSize=12.sp);Text(item.genre+" · "+item.lang,color=cyan,fontSize=11.sp)};Text(item.key,color=gold,fontSize=11.sp)
        }}
@@ -221,6 +238,11 @@ class MainActivity:ComponentActivity(){
      Header("Configurar canción"){page=Page.LIBRARY}
      Spacer(Modifier.height(22.dp));Panel { Text(selected.title,fontSize=23.sp,fontWeight=FontWeight.Bold);Text(selected.artist,color=muted);Text("Tono original: ${selected.key}",color=gold) }
      Spacer(Modifier.height(12.dp))
+     Button(onClick={
+      val terms=android.net.Uri.encode("${selected.artist} ${selected.title} karaoke instrumental")
+      try { context.startActivity(Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://www.youtube.com/results?search_query=$terms"))) } catch (_:Exception) {}
+     },modifier=Modifier.fillMaxWidth(),colors=ButtonDefaults.buttonColors(containerColor=purple)){Text("▶ Buscar pista karaoke en YouTube",fontWeight=FontWeight.Bold)}
+     Text("Se abre la búsqueda oficial de YouTube; elegí un video karaoke. LRCLIB aporta la letra, pero no el audio.",color=muted,fontSize=11.sp)
      if(selectedAudioUri!=null){
       Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
        Button(onClick={if(player.isPlaying){player.pause();playerPlaying=false}else{player.play();playerPlaying=true}}){Text(if(player.isPlaying)"Pausar pista" else "▶ Reproducir pista")}
