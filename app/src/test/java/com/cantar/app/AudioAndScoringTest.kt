@@ -23,6 +23,23 @@ class PitchAnalyzerTest {
     }
 
     @Test
+    fun findsFundamentalWhenSecondHarmonicIsStronger() {
+        val sampleRate = 44_100
+        val samples = ShortArray(4_096) { index ->
+            val time = index.toDouble() / sampleRate
+            val value = 3_000.0 * sin(2.0 * PI * 220.0 * time) +
+                9_000.0 * sin(2.0 * PI * 440.0 * time) +
+                4_000.0 * sin(2.0 * PI * 660.0 * time)
+            value.toInt().toShort()
+        }
+
+        val pitch = PitchAnalyzer.analyze(samples, sampleRate)
+
+        assertNotNull(pitch)
+        assertEquals(220f, pitch!!.frequencyHz, 4.0f)
+    }
+
+    @Test
     fun rejectsSilence() {
         assertNull(PitchAnalyzer.analyze(ShortArray(4_096), 44_100))
     }
