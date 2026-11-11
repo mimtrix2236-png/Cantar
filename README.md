@@ -15,7 +15,7 @@ Aplicación Android nativa de karaoke y entrenamiento vocal, con interfaz azul o
 - Captura de micrófono con AudioRecord y estimación de frecuencia fundamental mediante YIN.
 - Importación de una melodía de referencia monofónica CSV, sincronizada por milisegundos desde el inicio del archivo de audio.
 - Gráfico de notas objetivo y trazo vocal; indicador verde dentro de ±50 cents y ámbar fuera de tolerancia.
-- Puntuación de hasta 100 puntos por nota, calculada a partir del error mediano de afinación de las muestras detectadas.
+- Puntuación final normalizada de 0 a 1.000 puntos, calculada nota por nota a partir del error mediano de afinación de las muestras detectadas.
 - Historial y mejores marcas guardados localmente.
 
 ## Preparar una sesión puntuable
