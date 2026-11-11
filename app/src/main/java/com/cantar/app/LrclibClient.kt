@@ -69,11 +69,11 @@ object LrclibClient {
             connectTimeout = 10000
             readTimeout = 12000
             setRequestProperty("Accept", "application/json")
-            setRequestProperty("X-User-Agent", "Cantar/1.0 (https://github.com/mimtrix2236-png/Cantar)")
+            setRequestProperty("X-User-Agent", CLIENT_HEADER)
         }
         try {
             val status = connection.responseCode
-            if (status == HttpURLConnection.429) {
+            if (status == 429) {
                 val retryAfter = connection.getHeaderField("Retry-After")?.toIntOrNull()?.coerceIn(1, 300) ?: 30
                 throw RateLimitedException(retryAfter)
             }
