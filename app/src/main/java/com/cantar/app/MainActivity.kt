@@ -147,6 +147,7 @@ class MainActivity:ComponentActivity(){
  var query by remember { mutableStateOf("") }
  var remoteTracks by remember { mutableStateOf(emptyList<LrclibTrack>()) }
  var searchingOnline by remember { mutableStateOf(false) }
+ var remoteError by remember { mutableStateOf("") }
  var style by remember { mutableStateOf("Todos") }
  var lang by remember { mutableStateOf("Todos") }
  var shift by remember { mutableIntStateOf(prefs.getInt("transpose",0).coerceIn(-12,12)) }
@@ -177,11 +178,14 @@ class MainActivity:ComponentActivity(){
   selectedAudioUri?.let { player.setMediaItem(MediaItem.fromUri(it)); player.prepare() }
  }
  LaunchedEffect(query) {
-  if (query.trim().length < 3) { remoteTracks = emptyList(); searchingOnline = false }
+  if (query.trim().length < 3) { remoteTracks = emptyList(); searchingOnline = false; remoteError="" }
   else {
    delay(450)
    searchingOnline = true
-   remoteTracks = try { LrclibClient.search(query) } catch (_: Exception) { emptyList() }
+   remoteError=""
+   remoteTracks = try { LrclibClient.search(query) }
+   catch(error:LrclibClient.RateLimitedException){remoteError="LRCLIB pidió esperar ${error.retryAfterSeconds} s antes de otra búsqueda.";emptyList()}
+   catch(_:Exception){remoteError="No se pudo consultar LRCLIB. Revisá la conexión e intentá más tarde.";emptyList()}
    searchingOnline = false
   }
  }
@@ -384,6 +388,7 @@ class MainActivity:ComponentActivity(){
       Row(Modifier.horizontalScroll(rememberScrollState()).padding(vertical=5.dp)){styles.forEach{FilterChip(style==it,{style=it},{Text(it,fontSize=12.sp)})}}
       Row(verticalAlignment=Alignment.CenterVertically){Text(if(searchingOnline)"Buscando letras en LRCLIB…" else "${remoteTracks.size} letras coincidentes · ${filtered.size} ejemplos",color=muted,modifier=Modifier.weight(1f));TextButton({audioPicker.launch(arrayOf("audio/*"))}){Icon(Icons.Default.LibraryMusic,null);Text(" Importar audio")}}
       Text("Los resultados LRCLIB aportan letras; no son pistas de audio ni un catálogo por género.",color=muted,fontSize=10.sp)
+      if(remoteError.isNotBlank())Text(remoteError,color=gold,fontSize=11.sp)
       LazyColumn(verticalArrangement=Arrangement.spacedBy(8.dp)){
        items(remoteTracks,key={ "lrc-${it.id}" }){track->Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(panel).clickable{
         selectSong(Song(track.trackName,track.artistName,"No verificada","Sin clasificar","Sin clasificar"));lyricLines=parseLrc(track.syncedLyrics.orEmpty())
