@@ -238,43 +238,45 @@ class MainActivity:ComponentActivity(){
      Text("Ajuste de −12 a +12 semitonos",color=muted,fontSize=12.sp)
      Spacer(Modifier.weight(1f));HomeButton("▶  Comenzar a cantar",green){points=0;duelRound=1;firstDuelScore=0;secondDuelScore=0;if(selectedAudioUri!=null){player.seekTo(0);player.play();playerPlaying=true};page=Page.SING}
     }
-    Page.SING->Column(Modifier.fillMaxSize().padding(16.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(10.dp)){
-     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text("♫  ${selected.title}",fontWeight=FontWeight.ExtraBold,fontSize=18.sp,modifier=Modifier.weight(1f));TextButton(onClick={openTvCast()}){Text("▣ TV",color=cyan)}}
-     Text("${selected.artist} · ${if(mode==PlayMode.DUEL) "Turno $duelRound" else "Modo Solo"}",color=muted,fontSize=12.sp)
-     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){ScorePill("PUNTOS",points.toString());ScorePill("NOTA DETECTADA",livePitch?.noteName ?: "—")}
-     Panel {
-      Text("LETRA SINCRONIZADA",color=cyan,fontWeight=FontWeight.Bold,fontSize=12.sp)
-      val lyricIndex = lyricLines.indexOfLast { it.timeMs <= currentPositionMs }
-      Text(if(lyricLines.isEmpty()) "Importá el archivo .LRC de esta canción para ver la letra siguiendo la música." else lyricLines.getOrNull(lyricIndex)?.text?.ifBlank { "♪" } ?: "Preparados...",fontSize=23.sp,fontWeight=FontWeight.Bold,color=Color.White)
-      Text(lyricLines.getOrNull(lyricIndex + 1)?.text ?: "",color=muted,fontSize=16.sp)
-     }
-     Panel {
-      Text("AFINACIÓN EN VIVO",color=cyan,fontWeight=FontWeight.Bold)
-      Text(livePitch?.let { "${it.noteName} · ${it.frequencyHz.toInt()} Hz · ${it.cents} cents" } ?: "Cantá sobre la melodía",fontSize=25.sp,fontWeight=FontWeight.ExtraBold,color=livePitch?.let { if(kotlin.math.abs(it.cents)<=25) green else gold } ?: muted)
-      key(duelRound){ VocalPitchCapture(onPitch={livePitch=it},onPoints={points=it}) }
-     }
-     Text("La letra sigue el tiempo de la pista. Las notas objetivo sincronizadas requieren una partitura MIDI o un archivo de notas por canción; todavía no se comparan automáticamente.",color=muted,fontSize=11.sp)
-     Spacer(Modifier.height(2.dp))
-     HomeButton(if(mode==PlayMode.DUEL && duelRound==1) "Finalizar turno 1" else "Finalizar sesión",green){
-      if(mode==PlayMode.DUEL && duelRound==1){
-       firstDuelScore=points;duelRound=2;points=0;livePitch=null;if(selectedAudioUri!=null){player.seekTo(0);player.play();playerPlaying=true}
-      } else {
-       if(mode==PlayMode.DUEL) secondDuelScore=points
-       lastScore=if(mode==PlayMode.DUEL) maxOf(firstDuelScore,secondDuelScore) else points
-       sessions++;if(lastScore>bestScore)bestScore=lastScore
-       if(mode==PlayMode.DUEL){
-        val winner=if(firstDuelScore>secondDuelScore) profileName.ifBlank{"Jugador 1"} else if(secondDuelScore>firstDuelScore) opponent.ifBlank{"Jugador 2"} else "Empate"
-        duelHistory=(duelHistory+"\n"+winner+": "+firstDuelScore+" - "+secondDuelScore).takeLast(3000)
-        prefs.edit()
-         .putString("duel_history",duelHistory)
-         .putInt("profile_best_"+profileName.trim().ifBlank{"Jugador 1"}, maxOf(prefs.getInt("profile_best_"+profileName.trim().ifBlank{"Jugador 1"},0), firstDuelScore))
-         .putInt("profile_best_"+opponent.trim().ifBlank{"Jugador 2"}, maxOf(prefs.getInt("profile_best_"+opponent.trim().ifBlank{"Jugador 2"},0), secondDuelScore))
-         .apply()
+    Page.SING->BoxWithConstraints(Modifier.fillMaxSize().padding(8.dp)){
+     val compact=maxHeight<500.dp
+     val lyricIndex=lyricLines.indexOfLast{it.timeMs<=currentPositionMs}
+     val currentLyric=if(lyricLines.isEmpty())"La letra sincronizada aparecerá aquí al conectar una pista online." else lyricLines.getOrNull(lyricIndex)?.text?.ifBlank{"♪"}?:"Preparados..."
+     val nextLyric=lyricLines.getOrNull(lyricIndex+1)?.text.orEmpty()
+     Column(Modifier.fillMaxSize(),verticalArrangement=Arrangement.spacedBy(if(compact)4.dp else 8.dp)){
+      Row(Modifier.fillMaxWidth().height(if(compact)30.dp else 38.dp),verticalAlignment=Alignment.CenterVertically){
+       Text("♫  ${selected.title} · ${selected.artist}",fontWeight=FontWeight.ExtraBold,fontSize=if(compact)13.sp else 17.sp,modifier=Modifier.weight(1f),maxLines=1)
+       ScorePill("PUNTOS",points.toString())
+       TextButton(onClick={openTvCast()},contentPadding=PaddingValues(horizontal=5.dp)){Text("▣ TV",color=cyan)}
+      }
+      Panel(Modifier.fillMaxWidth().height(if(compact)if(nextLyric.isBlank())58.dp else 72.dp else 112.dp)){
+       Text("LETRA EN VIVO",color=cyan,fontWeight=FontWeight.Bold,fontSize=if(compact)9.sp else 11.sp)
+       Text(currentLyric,fontSize=if(compact)17.sp else 24.sp,fontWeight=FontWeight.ExtraBold,color=Color.White,maxLines=1)
+       if(nextLyric.isNotBlank())Text(nextLyric,color=muted,fontSize=if(compact)11.sp else 15.sp,maxLines=1)
+      }
+      Row(Modifier.weight(1f).fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){
+       Panel(Modifier.weight(1f).fillMaxHeight()){
+        Text("NOTAS OBJETIVO",color=cyan,fontWeight=FontWeight.Bold,fontSize=if(compact)10.sp else 12.sp)
+        Box(Modifier.weight(1f).fillMaxWidth().padding(top=6.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFF080F29)),contentAlignment=Alignment.Center){
+         Column(horizontalAlignment=Alignment.CenterHorizontally){
+          Text(livePitch?.noteName?:"—",color=green,fontSize=if(compact)27.sp else 36.sp,fontWeight=FontWeight.Black)
+          Text("Tu voz detectada",color=muted,fontSize=10.sp)
+          Text("La melodía objetivo se mostrará al recibir los datos de notas de la pista.",color=muted,fontSize=9.sp)
+         }
+        }
        }
-       prefs.edit().putInt("last_score",lastScore).putInt("best_score",bestScore).putInt("sessions",sessions)
-        .putInt("profile_best_"+profileName.trim().ifBlank{"Invitado"}, maxOf(prefs.getInt("profile_best_"+profileName.trim().ifBlank{"Invitado"},0), if(mode==PlayMode.DUEL) firstDuelScore else points))
-        .apply()
-       page=Page.RESULT
+       Panel(Modifier.weight(1f).fillMaxHeight()){
+        Text("AFINACIÓN EN VIVO",color=cyan,fontWeight=FontWeight.Bold,fontSize=if(compact)10.sp else 12.sp)
+        Text(livePitch?.let{"${it.noteName} · ${it.frequencyHz.toInt()} Hz"}?:"Esperando voz",fontSize=if(compact)16.sp else 21.sp,fontWeight=FontWeight.ExtraBold,color=livePitch?.let{if(kotlin.math.abs(it.cents)<=25)green else gold}?:muted)
+        Text(livePitch?.let{"${it.cents} cents"}?:"",color=muted,fontSize=10.sp)
+        Spacer(Modifier.weight(1f))
+        key(duelRound){VocalPitchCapture(onPitch={livePitch=it},onPoints={points=it},modifier=Modifier.fillMaxWidth())}
+       }
+      }
+      if(!compact)Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
+       Text(if(playerPlaying)"● REPRODUCIENDO" else "PAUSADO",color=if(playerPlaying)green else gold,fontSize=11.sp,modifier=Modifier.weight(1f))
+       TextButton(onClick={if(player.isPlaying){player.pause();playerPlaying=false}else if(selectedAudioUri!=null){player.play();playerPlaying=true}}){Text(if(playerPlaying)"Pausar" else "Reproducir",color=cyan)}
+       TextButton(onClick={page=Page.RESULT;player.pause();playerPlaying=false}){Text("Finalizar",color=green)}
       }
      }
     }
@@ -303,7 +305,7 @@ class MainActivity:ComponentActivity(){
  }
 }
 @Composable private fun Header(title:String,onBack:()->Unit){Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){IconButton(onBack){Icon(Icons.Default.ArrowBack,null)};Text(title,fontSize=21.sp,fontWeight=FontWeight.Bold)}}
-@Composable private fun Panel(content:@Composable ColumnScope.()->Unit){Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(panel).padding(16.dp),content=content)}
+@Composable private fun Panel(modifier:Modifier=Modifier,content:@Composable ColumnScope.()->Unit){Column(modifier.clip(RoundedCornerShape(18.dp)).background(panel).padding(if(modifier==Modifier)16.dp else 10.dp),content=content)}
 @Composable private fun ModeCard(title:String,subtitle:String,selected:Boolean,modifier:Modifier,onClick:()->Unit){Column(modifier.clip(RoundedCornerShape(16.dp)).background(if(selected)Color(0xFF233A70) else panel).clickable(onClick = onClick).padding(13.dp)){Text(title,color=if(selected)cyan else Color.White,fontWeight=FontWeight.Bold);Text(subtitle,color=muted,fontSize=11.sp)}}
 @Composable private fun ScorePill(label:String,value:String){Column(Modifier.clip(RoundedCornerShape(13.dp)).background(panel).padding(horizontal=16.dp, vertical=9.dp)){Text(label,color=cyan,fontSize=11.sp);Text(value,color=green,fontWeight=FontWeight.Bold,fontSize=20.sp)}}
 @Composable private fun HomeButton(label:String,brush:Brush,onClick:()->Unit){Box(Modifier.fillMaxWidth().padding(vertical=5.dp).height(54.dp).clip(RoundedCornerShape(16.dp)).background(brush).clickable(onClick=onClick),contentAlignment=Alignment.Center){Text(label,fontWeight=FontWeight.Bold,fontSize=15.sp,color=Color.White)}}
