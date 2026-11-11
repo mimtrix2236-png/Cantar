@@ -42,7 +42,7 @@ class MelodyReferenceTest {
         scorer.observe(400, si)
         val result = scorer.finish()
 
-        assertEquals(200, result.totalPoints)
+        assertEquals(1_000, result.totalPoints)
         assertEquals(2, result.correctNotes)
         assertEquals(2, result.evaluatedNotes)
     }
@@ -58,7 +58,7 @@ class MelodyReferenceTest {
 
         val result = scorer.finish()
 
-        assertEquals(50, result.totalPoints)
+        assertEquals(250, result.totalPoints)
         assertEquals(1, result.correctNotes)
         assertEquals(2, result.evaluatedNotes)
     }
