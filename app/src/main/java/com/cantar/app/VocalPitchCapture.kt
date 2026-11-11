@@ -30,8 +30,6 @@ fun VocalPitchCapture(
     var recording by remember { mutableStateOf(false) }
     var permissionDenied by remember { mutableStateOf(false) }
     var current by remember { mutableStateOf<PitchAnalyzer.Pitch?>(null) }
-    var earned by remember { mutableIntStateOf(0) }
-    var lastAwardAt by remember { mutableLongStateOf(0L) }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         permissionDenied = !granted
         recording = granted
@@ -54,12 +52,6 @@ fun VocalPitchCapture(
                         withContext(Dispatchers.Main) {
                             current = pitch
                             onPitch(pitch)
-                            val now = System.currentTimeMillis()
-                            if (pitch != null && abs(pitch.cents) <= 25 && now - lastAwardAt >= 250) {
-                                earned += 10
-                                lastAwardAt = now
-                                onPoints(earned)
-                            }
                         }
                     }
                 }
@@ -71,14 +63,14 @@ fun VocalPitchCapture(
     }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(current?.let { "${it.noteName} · ${it.frequencyHz.toInt()} Hz · ${it.cents} cents" } ?: "Cantá una nota sostenida para medir tu afinación",
-            color = current?.let { if (abs(it.cents) <= 25) Color(0xFF22E66B) else Color(0xFFFFD43B) } ?: Color(0xFF9BA8C8))
-        Text("Puntos por afinación estable: $earned", color = Color(0xFF22E66B))
+            color = current?.let { if (abs(it.cents) <= 25) Color(0xFF16E34F) else Color(0xFFFFD900) } ?: Color(0xFF9BA8C8))
+        Text("La puntuación se habilita al comparar con las notas objetivo de la canción.", color = Color(0xFF9BA8C8))
         if (permissionDenied) Text("Necesitás habilitar el micrófono en Android para usar esta función.", color = Color(0xFFFFD43B))
         Button(onClick = {
             if (recording) recording = false
             else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) recording = true
             else permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-        }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = if (recording) Color(0xFFB83250) else Color(0xFF19A85A))) {
+        }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = if (recording) Color(0xFFB83250) else Color(0xFF16E34F))) {
             Text(if (recording) "Detener micrófono" else "Activar micrófono y cantar")
         }
     }
