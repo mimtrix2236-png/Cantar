@@ -48,6 +48,22 @@ class MelodyReferenceTest {
     }
 
     @Test
+    fun appliesFiftyCentToleranceToEachNote() {
+        val notes = MelodyReferenceParser.parseCsv(
+            "start_ms,duration_ms,midi_note\\n0,250,69\\n300,250,69"
+        )
+        val scorer = MelodyScorer(notes)
+        scorer.observe(100, PitchAnalyzer.Pitch(440f, 69, "La 4", 50, 0.99f))
+        scorer.observe(400, PitchAnalyzer.Pitch(466.16f, 70, "La♯ 4", 0, 0.99f))
+
+        val result = scorer.finish()
+
+        assertEquals(50, result.totalPoints)
+        assertEquals(1, result.correctNotes)
+        assertEquals(2, result.evaluatedNotes)
+    }
+
+    @Test
     fun transpositionMovesTargetBySemitones() {
         val notes = MelodyReferenceParser.parseCsv("start_ms,duration_ms,midi_note\n0,300,69")
         val scorer = MelodyScorer(notes, transposeSemitones = 2)
