@@ -3,10 +3,11 @@ package com.cantar.app
 import kotlin.math.abs
 import kotlin.math.ln
 import kotlin.math.sqrt
+import kotlin.math.roundToInt
 
 /**
- * Lightweight monophonic pitch estimator for PCM microphone frames.
- * Uses normalized autocorrelation; returns null for silence or an unclear period.
+ * YIN fundamental-frequency estimator for monophonic vocal frames.
+ * Downsamples by two to reduce work while keeping ample resolution for voice.
  */
 object PitchAnalyzer {
     data class Pitch(
@@ -25,86 +26,101 @@ object PitchAnalyzer {
     fun analyze(samples: ShortArray, sampleRate: Int = 44_100): Pitch? {
         if (samples.size < 2_048 || sampleRate <= 0) return null
 
-        val frame = FloatArray(samples.size)
+        val decimation = 2
+        val effectiveRate = sampleRate / decimation
+        val size = samples.size / decimation
+        if (size < 1_024) return null
+
+        val signal = FloatArray(size)
+        var mean = 0.0
         var energy = 0.0
-        for (i in samples.indices) {
-            val value = samples[i].toFloat() / 32768f
-            frame[i] = value
+        for (i in 0 until size) {
+            val value = samples[i * decimation].toFloat() / 32768f
+            signal[i] = value
+            mean += value
             energy += value * value
         }
-        val rms = sqrt(energy / samples.size).toFloat()
-        if (rms < 0.012f) return null
+        val rms = sqrt(energy / size).toFloat()
+        if (rms < 0.010f) return null
 
-        // Remove DC offset and apply a Hann window to reduce edge artifacts.
-        val mean = frame.average().toFloat()
-        for (i in frame.indices) {
-            val window = 0.5f - 0.5f * kotlin.math.cos(
-                (2.0 * Math.PI * i / (frame.size - 1)).toFloat()
-            )
-            frame[i] = (frame[i] - mean) * window
-        }
+        val dc = (mean / size).toFloat()
+        for (i in signal.indices) signal[i] -= dc
 
         val minFrequency = 65f
         val maxFrequency = 1_000f
-        val minLag = (sampleRate / maxFrequency).toInt().coerceAtLeast(2)
-        val maxLag = (sampleRate / minFrequency).toInt().coerceAtMost(frame.size / 2)
-        var bestLag = -1
-        var bestScore = 0f
+        val minTau = (effectiveRate / maxFrequency).toInt().coerceAtLeast(2)
+        val maxTau = (effectiveRate / minFrequency).toInt().coerceAtMost(size / 2)
+        if (maxTau <= minTau) return null
 
-        for (lag in minLag..maxLag) {
-            var cross = 0.0
-            var left = 0.0
-            var right = 0.0
-            val limit = frame.size - lag
+        // YIN difference function and cumulative mean normalized difference.
+        val difference = FloatArray(maxTau + 1)
+        val normalized = FloatArray(maxTau + 1)
+        for (tau in 1..maxTau) {
+            var sum = 0.0
+            val limit = size - tau
             var i = 0
             while (i < limit) {
-                val a = frame[i].toDouble()
-                val b = frame[i + lag].toDouble()
-                cross += a * b
-                left += a * a
-                right += b * b
+                val delta = signal[i] - signal[i + tau]
+                sum += delta * delta
                 i++
             }
-            val denominator = sqrt(left * right)
-            val score = if (denominator > 1e-12) (cross / denominator).toFloat() else 0f
-            if (score > bestScore) {
-                bestScore = score
-                bestLag = lag
+            difference[tau] = sum.toFloat()
+        }
+
+        var runningSum = 0.0
+        for (tau in 1..maxTau) {
+            runningSum += difference[tau]
+            normalized[tau] = if (runningSum > 1e-12) {
+                (difference[tau] * tau / runningSum).toFloat()
+            } else {
+                1f
             }
         }
 
-        if (bestLag < 0 || bestScore < 0.72f) return null
-
-        // Parabolic interpolation improves resolution between integer sample lags.
-        fun correlation(lag: Int): Double {
-            var sum = 0.0
-            val limit = frame.size - lag
-            for (i in 0 until limit) sum += frame[i].toDouble() * frame[i + lag].toDouble()
-            return sum
+        // Choose the first convincing local minimum rather than a later harmonic.
+        val threshold = 0.16f
+        var tau = minTau
+        var candidate = -1
+        while (tau <= maxTau) {
+            if (normalized[tau] < threshold) {
+                while (tau < maxTau && normalized[tau + 1] < normalized[tau]) tau++
+                candidate = tau
+                break
+            }
+            tau++
         }
-        val refinedLag = if (bestLag > minLag && bestLag < maxLag) {
-            val a = correlation(bestLag - 1)
-            val b = correlation(bestLag)
-            val c = correlation(bestLag + 1)
-            val divisor = a - 2.0 * b + c
-            if (abs(divisor) > 1e-12) bestLag + 0.5 * (a - c) / divisor else bestLag.toDouble()
-        } else bestLag.toDouble()
+        if (candidate < 0) {
+            candidate = (minTau..maxTau).minByOrNull { normalized[it] } ?: return null
+            if (normalized[candidate] > 0.32f) return null
+        }
 
-        val frequency = (sampleRate / refinedLag).toFloat()
+        val refinedTau = if (candidate > minTau && candidate < maxTau) {
+            val left = normalized[candidate - 1]
+            val center = normalized[candidate]
+            val right = normalized[candidate + 1]
+            val divisor = left - 2f * center + right
+            if (abs(divisor) > 1e-7f) {
+                candidate + (0.5f * (left - right) / divisor)
+            } else candidate.toFloat()
+        } else candidate.toFloat()
+
+        if (refinedTau <= 0f) return null
+        val frequency = effectiveRate / refinedTau
         if (!frequency.isFinite() || frequency !in minFrequency..maxFrequency) return null
 
-        val midi = (69.0 + 12.0 * ln(frequency / 440.0) / ln(2.0)).toInt()
+        val midi = (69.0 + 12.0 * ln(frequency / 440.0) / ln(2.0)).roundToInt()
         val exactFrequency = 440.0 * Math.pow(2.0, (midi - 69) / 12.0)
-        val cents = (1200.0 * ln(frequency / exactFrequency) / ln(2.0)).toInt()
+        val cents = (1200.0 * ln(frequency / exactFrequency) / ln(2.0)).roundToInt()
         val octave = midi / 12 - 1
-        val name = "${noteNames[Math.floorMod(midi, 12)]} ${octave}"
+        val confidence = (1f - normalized[candidate]).coerceIn(0f, 1f)
 
+        if (confidence < 0.68f) return null
         return Pitch(
             frequencyHz = frequency,
             midiNote = midi,
-            noteName = name,
+            noteName = "${noteNames[Math.floorMod(midi, 12)]} $octave",
             cents = cents,
-            confidence = bestScore.coerceIn(0f, 1f)
+            confidence = confidence
         )
     }
 }
