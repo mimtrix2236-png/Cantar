@@ -42,7 +42,7 @@ Las tres filas numéricas anteriores son un ejemplo didáctico de formato, no co
 - Las notas deben estar ordenadas y no superponerse.
 - También se acepta el encabezado `start_ms,end_ms,midi_note`.
 
-Al importar el CSV, Cantar ajusta las notas objetivo con la misma transposición aplicada al audio. Si falta el audio o la referencia, la aplicación no presenta una puntuación como si fuera una evaluación real.
+Al importar el CSV, Cantar ajusta las notas objetivo con la misma transposición aplicada al audio. Hay una plantilla en `docs/melody-reference-template.csv`. Si falta el audio o la referencia, la aplicación no presenta una puntuación como si fuera una evaluación real.
 
 ## Compatibilidad y permisos
 
@@ -65,7 +65,7 @@ Abrir el proyecto en Android Studio y ejecutar:
 ./gradlew :app:assembleDebug
 ```
 
-GitHub Actions también ejecuta `:app:assembleDebug` en cada push a `main`. La existencia de un workflow no sustituye las pruebas en un teléfono real.
+GitHub Actions ejecuta `:app:testDebugUnitTest` y `:app:assembleDebug` en cada push a `main`. Las pruebas unitarias cubren una señal de 440 Hz, silencio, importación CSV, tolerancia de afinación y transposición. La existencia de un workflow no sustituye las pruebas en un teléfono real.
 
 ## Alcance y limitaciones conocidas
 
