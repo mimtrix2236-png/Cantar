@@ -35,7 +35,12 @@ object PitchAnalyzer {
         var mean = 0.0
         var energy = 0.0
         for (i in 0 until size) {
-            val value = samples[i * decimation].toFloat() / 32768f
+            val centerIndex = i * decimation
+            val left = samples[(centerIndex - 1).coerceAtLeast(0)].toFloat()
+            val center = samples[centerIndex].toFloat()
+            val right = samples[(centerIndex + 1).coerceAtMost(samples.lastIndex)].toFloat()
+            // Three-tap low-pass before decimation reduces aliasing from upper harmonics.
+            val value = (left * 0.25f + center * 0.5f + right * 0.25f) / 32768f
             signal[i] = value
             mean += value
             energy += value * value
