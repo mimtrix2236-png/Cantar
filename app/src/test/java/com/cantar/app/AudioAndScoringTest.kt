@@ -45,6 +45,7 @@ class MelodyReferenceTest {
         assertEquals(1_000, result.totalPoints)
         assertEquals(2, result.correctNotes)
         assertEquals(2, result.evaluatedNotes)
+        assertEquals(2, result.detectedNotes)
     }
 
     @Test
