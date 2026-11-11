@@ -375,6 +375,8 @@ class MainActivity:ComponentActivity(){
       ModeCard("⚔  DUELO","Compará dos perfiles",mode==PlayMode.DUEL,Modifier.weight(1f)){mode=PlayMode.DUEL}
      }
      if(mode==PlayMode.DUEL)OutlinedTextField(opponent,{opponent=it},Modifier.fillMaxWidth(),label={Text("Nombre del rival")},singleLine=true)
+     Text("Mejor marca de ${profileName.ifBlank{"Invitado"}}: ${prefs.getInt("profile_best_"+profileName.trim().ifBlank{"Invitado"},0)} puntos",color=green,fontSize=12.sp)
+     if(mode==PlayMode.DUEL)Text("Mejor marca de ${opponent.ifBlank{"Jugador 2"}}: ${prefs.getInt("profile_best_"+opponent.trim().ifBlank{"Jugador 2"},0)} puntos",color=gold,fontSize=12.sp)
      Text("Los datos del perfil, la modalidad y los resultados se guardan en este dispositivo.",color=muted,fontSize=12.sp)
      Spacer(Modifier.weight(1f));HomeButton("Guardar perfil",green){saveProfile();page=Page.HOME}
     }
@@ -523,7 +525,7 @@ class MainActivity:ComponentActivity(){
     }
     Page.HISTORY->Column(Modifier.fillMaxSize().padding(20.dp)){
      Header("Historial del perfil"){page=Page.HOME}
-     Panel{Text(profileName.ifBlank{"Perfil sin nombre"},fontSize=22.sp,fontWeight=FontWeight.Bold);Text("Mejor puntuación: $bestScore",color=green);Text("Última puntuación: $lastScore",color=gold);Text("Partidas guardadas: $sessions",color=muted);if(duelHistory.isNotBlank()){Text("DUELOS RECIENTES",color=cyan,fontWeight=FontWeight.Bold);Text(duelHistory,color=muted)}}
+     Panel{Text(profileName.ifBlank{"Perfil sin nombre"},fontSize=22.sp,fontWeight=FontWeight.Bold);Text("Mejor puntuación global: $bestScore",color=green);Text("Mejor marca del perfil: ${prefs.getInt("profile_best_"+profileName.trim().ifBlank{"Invitado"},0)}",color=cyan);if(mode==PlayMode.DUEL)Text("Mejor marca del rival: ${prefs.getInt("profile_best_"+opponent.trim().ifBlank{"Jugador 2"},0)}",color=gold);Text("Última puntuación: $lastScore",color=gold);Text("Partidas guardadas: $sessions",color=muted);if(duelHistory.isNotBlank()){Text("DUELOS RECIENTES",color=cyan,fontWeight=FontWeight.Bold);Text(duelHistory,color=muted)}}
      Text("Las puntuaciones son locales y permanecen en este dispositivo.",color=muted,fontSize=12.sp)
     }
     Page.SETTINGS->Column(Modifier.fillMaxSize().padding(20.dp)){
