@@ -46,6 +46,7 @@ import kotlinx.coroutines.delay
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
+import androidx.media3.common.PlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 
 private val bg=Color(0xFF05091E)
@@ -159,16 +160,19 @@ class MainActivity:ComponentActivity(){
  var lyricLines by remember { mutableStateOf(emptyList<LyricLine>()) }
  var currentPositionMs by remember { mutableLongStateOf(0L) }
  var playerPlaying by remember { mutableStateOf(false) }
+ var playerError by remember { mutableStateOf("") }
  val player = remember(context) { ExoPlayer.Builder(context).build() }
  DisposableEffect(player) {
   val listener=object:Player.Listener {
    override fun onIsPlayingChanged(isPlaying:Boolean){playerPlaying=isPlaying}
    override fun onPlaybackStateChanged(playbackState:Int){if(playbackState==Player.STATE_ENDED)playerPlaying=false}
+   override fun onPlayerError(error:PlaybackException){playerError=error.errorCodeName;playerPlaying=false}
   }
   player.addListener(listener)
   onDispose { player.removeListener(listener); player.release() }
  }
  LaunchedEffect(selectedAudioUri) {
+  playerError=""
   player.stop()
   selectedAudioUri?.let { player.setMediaItem(MediaItem.fromUri(it)); player.prepare() }
  }
@@ -416,6 +420,7 @@ class MainActivity:ComponentActivity(){
      Text("Se abre la búsqueda oficial de YouTube; elegí un video karaoke. LRCLIB aporta la letra, pero no el audio.",color=muted,fontSize=11.sp)
      OutlinedButton(onClick={audioPicker.launch(arrayOf("audio/*"))},modifier=Modifier.fillMaxWidth()){Text(if(selectedAudioUri==null)"Importar pista de audio" else "Cambiar pista de audio")}
      if(audioError.isNotBlank())Text(audioError,color=gold,fontSize=11.sp)
+     if(playerError.isNotBlank())Text("No se pudo reproducir la pista: $playerError",color=gold,fontSize=11.sp)
      OutlinedButton(onClick={referencePicker.launch(arrayOf("text/csv","text/plain","application/octet-stream"))},modifier=Modifier.fillMaxWidth()){Text("Importar melodía de referencia (.CSV)")}
      Text(if(referenceNotes.isEmpty())"Sin melodía de referencia: no se calcularán puntos por nota." else "Melodía cargada: ${referenceNotes.size} notas · puntuación nota por nota activa.",color=if(referenceNotes.isEmpty())gold else green,fontSize=11.sp)
      Text("Formato CSV: start_ms,duration_ms,midi_note. Los tiempos se miden desde el inicio del audio.",color=muted,fontSize=10.sp)
