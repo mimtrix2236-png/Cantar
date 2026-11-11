@@ -255,6 +255,8 @@ class MainActivity:ComponentActivity(){
    if(page!=Page.SETUP){
     val displayName=uri.lastPathSegment?.substringAfterLast('/')?.substringAfterLast(':') ?: "Audio local"
     selected=Song(displayName,"Archivo local","No verificada","Audio local","Local")
+    lyricLines=emptyList()
+    lyricIndex=0
    }
    playbackStarted=false
    audioError=""
@@ -283,6 +285,8 @@ class MainActivity:ComponentActivity(){
   playerPlaying=false
   playbackStarted=false
   clearReference()
+  lyricLines=emptyList()
+  lyricIndex=0
   shift=0
   page=Page.SETUP
  }
