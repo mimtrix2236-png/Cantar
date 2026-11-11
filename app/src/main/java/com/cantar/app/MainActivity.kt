@@ -103,7 +103,12 @@ private val library=listOf(
  Song("Lemon","Kenshi Yonezu","No verificada","J-pop","Japonés"),
  Song("Entre dos aguas","Paco de Lucía","No verificada","Flamenco","Instrumental"),
  Song("Oh Happy Day","Edwin Hawkins Singers","No verificada","Gospel","Inglés"),
- Song("Titanium","David Guetta feat. Sia","No verificada","Electrónica","Inglés")
+ Song("Titanium","David Guetta feat. Sia","No verificada","Electrónica","Inglés"),
+ Song("Contigo aprendí","Armando Manzanero","No verificada","Bolero","Español"),
+ Song("Aquarela do Brasil","João Gilberto","No verificada","Samba","Portugués"),
+ Song("Mas que nada","Sérgio Mendes","No verificada","Samba","Portugués"),
+ Song("El Rey","Vicente Fernández","No verificada","Regional mexicano","Español"),
+ Song("La puerta negra","Los Tigres del Norte","No verificada","Regional mexicano","Español")
 )
 private val styles=listOf("Todos","Rock nacional","Pop latino","Rock","Pop","Reguetón","Urbano latino","Cumbia","Cuarteto","Salsa","Bachata","Merengue","Vallenato","Tango","Folklore","Latin rock","Bolero","Bossa nova","Samba","Regional mexicano","Jazz","Blues","R&B","Hip-hop","Rap","Reggae","Electrónica","Dance","Disco","Country","Metal","Grunge","Indie","Funk","Gospel","Chanson","K-pop","J-pop","Afrobeats","Flamenco","Clásica")
 private enum class Page { HOME, PROFILE, LIBRARY, SETUP, SING, RESULT, HISTORY, SETTINGS }
@@ -427,7 +432,7 @@ class MainActivity:ComponentActivity(){
       Text("La letra acompaña el tiempo de la pista cuando importás su archivo .LRC.",color=muted,fontSize=12.sp)
      } else { Text("Importá un archivo de audio para reproducirlo y cambiar su tono. El catálogo de muestra no incluye grabaciones.",color=muted,fontSize=12.sp) }
      Spacer(Modifier.height(10.dp));Text("ELEGIR TONO",color=cyan,fontWeight=FontWeight.Bold)
-     Text(if(shift==0)selected.key else "${selected.key}  (${if(shift>0)"+" else ""}$shift)",fontSize=24.sp,color=green,fontWeight=FontWeight.Bold)
+     Text(if(shift==0)"Tono original no verificado" else "Transposición ${if(shift>0)"+" else ""}$shift semitonos",fontSize=20.sp,color=green,fontWeight=FontWeight.Bold)
      Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){listOf(-2,-1,0,1,2).forEach{n->OutlinedButton({shift=if(n==0)0 else (shift+n).coerceIn(-12,12)}){Text(if(n==0)"Normal" else if(n<0)"Más bajo\n($n)" else "Más alto\n(+$n)")}}}
      Text("Ajuste de −12 a +12 semitonos",color=muted,fontSize=12.sp)
      Spacer(Modifier.weight(1f));HomeButton("▶  Comenzar a cantar",green){
