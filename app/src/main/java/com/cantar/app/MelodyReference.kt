@@ -144,7 +144,7 @@ class MelodyScorer(
     }
 
     fun snapshot(): ScoringSnapshot = ScoringSnapshot(
-        totalPoints = scores.sumOf { it.points },
+        totalPoints = if (notes.isEmpty()) 0 else (scores.sumOf { it.points } * 10f / notes.size).roundToInt(),
         correctNotes = scores.count { it.inTune },
         evaluatedNotes = scores.size,
         totalNotes = notes.size
