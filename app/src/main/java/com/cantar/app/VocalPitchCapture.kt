@@ -99,8 +99,7 @@ fun VocalPitchCapture(
                             }
                         }
                         count == 0 -> delay(6)
-                        count == AudioRecord.ERROR_INVALID_OPERATION ||
-                            count == AudioRecord.ERROR_BAD_VALUE -> break
+                        count < 0 -> break
                         else -> delay(10)
                     }
                 }
@@ -108,6 +107,8 @@ fun VocalPitchCapture(
             } catch (_: SecurityException) {
                 false
             } catch (_: IllegalStateException) {
+                false
+            } catch (_: IllegalArgumentException) {
                 false
             } finally {
                 recorder?.let {
