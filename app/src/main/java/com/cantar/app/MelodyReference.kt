@@ -29,7 +29,8 @@ data class ScoringSnapshot(
     val totalPoints: Int = 0,
     val correctNotes: Int = 0,
     val evaluatedNotes: Int = 0,
-    val totalNotes: Int = 0
+    val totalNotes: Int = 0,
+    val detectedNotes: Int = 0
 ) {
     val accuracyPercent: Int
         get() = if (evaluatedNotes == 0) 0 else (correctNotes * 100f / evaluatedNotes).roundToInt()
@@ -147,7 +148,8 @@ class MelodyScorer(
         totalPoints = if (notes.isEmpty()) 0 else (scores.sumOf { it.points } * 10f / notes.size).roundToInt(),
         correctNotes = scores.count { it.inTune },
         evaluatedNotes = scores.size,
-        totalNotes = notes.size
+        totalNotes = notes.size,
+        detectedNotes = scores.count { it.detectedSamples > 0 }
     )
 
     private fun finalizeExpired(positionMs: Long) {
