@@ -36,7 +36,7 @@ object LrclibClient {
         }
         try {
             val status = connection.responseCode
-            if (status == HttpURLConnection.HTTP_TOO_MANY_REQUESTS) {
+            if (status == 429) {
                 val retryAfter = connection.getHeaderField("Retry-After")?.toIntOrNull()?.coerceIn(1, 300) ?: 30
                 throw RateLimitedException(retryAfter)
             }
