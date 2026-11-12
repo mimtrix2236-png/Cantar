@@ -115,7 +115,7 @@ private enum class Page { HOME, PROFILE, LIBRARY, SETUP, SING, RESULT, HISTORY, 
 private enum class PlayMode { SOLO, DUEL }
 private data class LyricLine(val timeMs: Long, val text: String)
 private fun parseLrc(raw: String): List<LyricLine> {
- val regex = Regex("\\[(\\d{1,2}):(\\d{2})(?:\\.(\\d{1,3}))?]([^\\r\\n]*)")
+ val regex = Regex("\\[(\\d{1,2}):(\\d{2})(?:\\.(\\d{1,3}))?]([^\\r\n]*)")
  return regex.findAll(raw).mapNotNull { match ->
   val min = match.groupValues[1].toLongOrNull() ?: return@mapNotNull null
   val sec = match.groupValues[2].toLongOrNull() ?: return@mapNotNull null
@@ -356,9 +356,9 @@ class MainActivity:ComponentActivity(){
  fun useSelectedMidiTrack(){
   val track=midiTracks.getOrNull(selectedMidiTrackIndex) ?: return
   val csv=buildString {
-   append("start_ms,duration_ms,midi_note\\n")
+   append("start_ms,duration_ms,midi_note\n")
    track.referenceNotes.forEach { note ->
-    append(note.startMs).append(',').append(note.durationMs).append(',').append(note.midiNote).append('\\n')
+    append(note.startMs).append(',').append(note.durationMs).append(',').append(note.midiNote).append('\n')
    }
   }
   referenceCsv=csv
