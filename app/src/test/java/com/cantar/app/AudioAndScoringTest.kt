@@ -204,6 +204,13 @@ class MelodyReferenceTest {
     }
 
     @Test
+    fun acceptsLongSustainedReferenceNotesImportedFromMidi() {
+        val notes = MelodyReferenceParser.parseCsv("start_ms,duration_ms,midi_note\\n0,20000,60")
+
+        assertEquals(20_000L, notes.single().durationMs)
+    }
+
+    @Test
     fun transpositionMovesTargetBySemitones() {
         val notes = MelodyReferenceParser.parseCsv("start_ms,duration_ms,midi_note\n0,300,69")
         val scorer = MelodyScorer(notes, transposeSemitones = 2)
