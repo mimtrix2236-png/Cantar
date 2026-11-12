@@ -4,6 +4,10 @@ import android.Manifest
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.media.AudioManager
+import android.media.audiofx.AudioEffect
+import android.media.audiofx.AcousticEchoCanceler
+import android.media.audiofx.NoiseSuppressor
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -29,6 +34,7 @@ fun VocalPitchCapture(
     var recording by remember { mutableStateOf(false) }
     var permissionDenied by remember { mutableStateOf(false) }
     var audioUnavailable by remember { mutableStateOf(false) }
+    var effectsMessage by remember { mutableStateOf("La cancelación de eco depende del teléfono.") }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -47,6 +53,8 @@ fun VocalPitchCapture(
             val sampleRates = intArrayOf(44_100, 48_000, 22_050)
             var recorder: AudioRecord? = null
             var activeRate = 0
+            var echoCanceler: AcousticEchoCanceler? = null
+            var noiseSuppressor: NoiseSuppressor? = null
 
             try {
                 for (rate in sampleRates) {
@@ -56,8 +64,14 @@ fun VocalPitchCapture(
                         AudioFormat.ENCODING_PCM_16BIT
                     )
                     if (minimum <= 0) continue
+                    val audioManager = context.getSystemService(AudioManager::class.java)
+                    val inputSource = if (audioManager?.getProperty(AudioManager.PROPERTY_SUPPORT_AUDIO_SOURCE_UNPROCESSED) == "true") {
+                        MediaRecorder.AudioSource.UNPROCESSED
+                    } else {
+                        MediaRecorder.AudioSource.VOICE_RECOGNITION
+                    }
                     val candidate = AudioRecord(
-                        MediaRecorder.AudioSource.VOICE_RECOGNITION,
+                        inputSource,
                         rate,
                         AudioFormat.CHANNEL_IN_MONO,
                         AudioFormat.ENCODING_PCM_16BIT,
@@ -72,6 +86,23 @@ fun VocalPitchCapture(
                 }
 
                 val audioRecord = recorder ?: return@withContext false
+                echoCanceler = runCatching {
+                    if (AcousticEchoCanceler.isAvailable()) AcousticEchoCanceler.create(audioRecord.audioSessionId) else null
+                }.getOrNull()
+                noiseSuppressor = runCatching {
+                    if (NoiseSuppressor.isAvailable()) NoiseSuppressor.create(audioRecord.audioSessionId) else null
+                }.getOrNull()
+                val echoEnabled = runCatching { echoCanceler?.setEnabled(true) == AudioEffect.SUCCESS }.getOrDefault(false)
+                val noiseEnabled = runCatching { noiseSuppressor?.setEnabled(true) == AudioEffect.SUCCESS }.getOrDefault(false)
+                withContext(Dispatchers.Main) {
+                    effectsMessage = when {
+                        echoEnabled && noiseEnabled -> "Cancelación de eco y ruido activadas por el dispositivo."
+                        echoEnabled -> "Cancelación de eco activa; reducción de ruido no disponible."
+                        noiseEnabled -> "Reducción de ruido activa; cancelación de eco no disponible."
+                        else -> "El teléfono no ofrece filtros compatibles. Para evitar que la música se cuele en el micrófono, usá auriculares."
+                    }
+                }
+
                 val readBuffer = ShortArray(2_048)
                 val frame = ShortArray(4_096)
                 var frameCount = 0
@@ -135,6 +166,7 @@ fun VocalPitchCapture(
                 color = Color(0xFFFFD43B)
             )
         }
+        Text(effectsMessage, color = Color(0xFF9BA8C8), fontSize = 10.sp)
         if (audioUnavailable) {
             Text(
                 "No se pudo iniciar el micrófono. Cerrá otras aplicaciones que usen audio y volvé a intentar.",
