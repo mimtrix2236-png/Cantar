@@ -509,7 +509,7 @@ class MainActivity:ComponentActivity(){
         FilterChip(selected=selectedMidiTrackIndex==index,onClick={selectedMidiTrackIndex=index},label={Text("${track.name} · ${track.referenceNotes.size} notas")})
        }
       }
-      OutlinedButton(onClick={useSelectedMidiTrack},modifier=Modifier.fillMaxWidth()){Text("Usar pista MIDI seleccionada")}
+      OutlinedButton(onClick={useSelectedMidiTrack()},modifier=Modifier.fillMaxWidth()){Text("Usar pista MIDI seleccionada")}
      }
      if(referenceError.isNotBlank())Text(referenceError,color=gold,fontSize=11.sp)
      if(selectedAudioUri!=null){
