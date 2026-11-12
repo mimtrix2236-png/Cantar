@@ -28,6 +28,8 @@ import kotlinx.coroutines.withContext
 @Composable
 fun VocalPitchCapture(
     onPitch: (PitchAnalyzer.Pitch?) -> Unit,
+    autoStart: Boolean = false,
+    onPermissionGranted: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -41,6 +43,11 @@ fun VocalPitchCapture(
     ) { granted ->
         permissionDenied = !granted
         recording = granted
+        if (granted) onPermissionGranted()
+    }
+
+    LaunchedEffect(autoStart) {
+        if (autoStart) recording = true
     }
 
     LaunchedEffect(recording) {
