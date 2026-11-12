@@ -113,7 +113,7 @@ class MelodyReferenceTest {
 
     @Test
     fun usesMedianPitchErrorToLimitSingleFrameOutliers() {
-        val notes = MelodyReferenceParser.parseCsv("start_ms,duration_ms,midi_note\\n0,500,69")
+        val notes = MelodyReferenceParser.parseCsv("start_ms,duration_ms,midi_note\n0,500,69")
         val scorer = MelodyScorer(notes)
         scorer.observe(100, PitchAnalyzer.Pitch(440f, 69, "La 4", 0, 0.99f))
         scorer.observe(200, PitchAnalyzer.Pitch(440f, 69, "La 4", 10, 0.99f))
@@ -124,7 +124,7 @@ class MelodyReferenceTest {
 
     @Test
     fun doesNotAwardPointsWhenNoVoiceWasDetected() {
-        val notes = MelodyReferenceParser.parseCsv("start_ms,duration_ms,midi_note\\n0,300,69")
+        val notes = MelodyReferenceParser.parseCsv("start_ms,duration_ms,midi_note\n0,300,69")
         val scorer = MelodyScorer(notes)
 
         val result = scorer.finish()
