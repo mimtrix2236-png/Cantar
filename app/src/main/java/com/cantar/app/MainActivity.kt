@@ -26,7 +26,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Mic
@@ -674,7 +674,7 @@ class MainActivity:ComponentActivity(){
   if(showExit)AlertDialog(onDismissRequest={showExit=false},title={Text("Cerrar aplicación")},text={Text("¿Querés salir de Cantar? Tu perfil y las puntuaciones guardadas permanecerán en este dispositivo.")},confirmButton={TextButton(onClick={onExit}){Text("Cerrar aplicación",color=green)}},dismissButton={TextButton(onClick={showExit=false}){Text("Seguir cantando")}})
  }
 }
-@Composable private fun Header(title:String,onBack:()->Unit){Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){IconButton(onBack){Icon(Icons.Default.ArrowBack,null)};Text(title,fontSize=21.sp,fontWeight=FontWeight.Bold)}}
+@Composable private fun Header(title:String,onBack:()->Unit){Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){IconButton(onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,null)};Text(title,fontSize=21.sp,fontWeight=FontWeight.Bold)}}
 @Composable private fun Panel(modifier:Modifier=Modifier,content:@Composable ColumnScope.()->Unit){Column(modifier.clip(RoundedCornerShape(18.dp)).background(panel).padding(if(modifier==Modifier)16.dp else 10.dp),content=content)}
 @Composable private fun ModeCard(title:String,subtitle:String,selected:Boolean,modifier:Modifier,onClick:()->Unit){Column(modifier.clip(RoundedCornerShape(16.dp)).background(if(selected)Color(0xFF233A70) else panel).clickable(onClick = onClick).padding(13.dp)){Text(title,color=if(selected)cyan else Color.White,fontWeight=FontWeight.Bold);Text(subtitle,color=muted,fontSize=11.sp)}}
 @Composable private fun ScorePill(label:String,value:String){Column(Modifier.clip(RoundedCornerShape(13.dp)).background(panel).padding(horizontal=16.dp, vertical=9.dp)){Text(label,color=cyan,fontSize=11.sp);Text(value,color=green,fontWeight=FontWeight.Bold,fontSize=20.sp)}}
