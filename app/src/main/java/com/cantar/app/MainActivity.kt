@@ -112,9 +112,23 @@ private val library=listOf(
  Song("Aquarela do Brasil","João Gilberto","No verificada","Samba","Portugués"),
  Song("Mas que nada","Sérgio Mendes","No verificada","Samba","Portugués"),
  Song("El Rey","Vicente Fernández","No verificada","Regional mexicano","Español"),
- Song("La puerta negra","Los Tigres del Norte","No verificada","Regional mexicano","Español")
+ Song("La puerta negra","Los Tigres del Norte","No verificada","Regional mexicano","Español"),
+ Song("Los dueños del pabellón","Damas Gratis","No verificada","Cumbia villera","Español"),
+ Song("Kilómetro 11","Tránsito Cocomarola","No verificada","Chamamé","Español"),
+ Song("Milonga sentimental","Carlos Gardel","No verificada","Milonga","Español"),
+ Song("Asa Branca","Luiz Gonzaga","No verificada","Forró","Portugués"),
+ Song("Evidências","Chitãozinho & Xororó","No verificada","Sertanejo","Portugués"),
+ Song("No Scrubs","TLC","No verificada","R&B","Inglés"),
+ Song("Juicy","The Notorious B.I.G.","No verificada","Rap","Inglés"),
+ Song("Wake Me Up","Avicii","No verificada","Dance","Inglés"),
+ Song("Stayin' Alive","Bee Gees","No verificada","Disco","Inglés"),
+ Song("Enter Sandman","Metallica","No verificada","Metal","Inglés"),
+ Song("Riptide","Vance Joy","No verificada","Indie","Inglés"),
+ Song("Superstition","Stevie Wonder","No verificada","Funk","Inglés"),
+ Song("Calm Down","Rema","No verificada","Afrobeats","Inglés"),
+ Song("Ode to Joy","Ludwig van Beethoven","No verificada","Clásica","Instrumental")
 )
-private val styles=listOf("Todos","Rock nacional","Pop latino","Rock","Pop","Reguetón","Urbano latino","Cumbia","Cuarteto","Salsa","Bachata","Merengue","Vallenato","Tango","Folklore","Latin rock","Bolero","Bossa nova","Samba","Regional mexicano","Jazz","Blues","R&B","Hip-hop","Rap","Reggae","Electrónica","Dance","Disco","Country","Metal","Grunge","Indie","Funk","Gospel","Chanson","K-pop","J-pop","Afrobeats","Flamenco","Clásica")
+private val styles=listOf("Todos","Rock nacional","Pop latino","Rock","Pop","Reguetón","Urbano latino","Cumbia","Cumbia villera","Cuarteto","Salsa","Bachata","Merengue","Vallenato","Chamamé","Milonga","Folklore","Latin rock","Bolero","Bossa nova","Samba","Forró","Sertanejo","Regional mexicano","Jazz","Blues","R&B","Hip-hop","Rap","Reggae","Electrónica","Dance","Disco","Country","Metal","Grunge","Indie","Funk","Gospel","Chanson","K-pop","J-pop","Afrobeats","Flamenco","Clásica")
 private enum class Page { HOME, PROFILE, LIBRARY, SETUP, SING, RESULT, HISTORY, SETTINGS }
 private enum class PlayMode { SOLO, DUEL }
 private data class LyricLine(val timeMs: Long, val text: String)
