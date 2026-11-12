@@ -606,6 +606,10 @@ class MainActivity:ComponentActivity(){
           if(pitch!=null){
            val error=if(target==null)Float.MAX_VALUE else (pitch.midiNote-target.midiNote)*100f+pitch.cents
            pitchTrace=(pitchTrace+PitchTracePoint(position,pitch.midiNote+pitch.cents/100f,target!=null && kotlin.math.abs(error)<=50f)).takeLast(240)
+          } else if(pitchTrace.lastOrNull()?.breakBefore!=true){
+           // A null YIN frame means the voice was not confidently detected.
+           // Keep an explicit break so the chart never bridges silence.
+           pitchTrace=(pitchTrace+PitchTracePoint(position,Float.NaN,false,breakBefore=true)).takeLast(240)
           }
          }
         },autoStart=micPermissionGranted,onPermissionGranted={micPermissionGranted=true},modifier=Modifier.fillMaxWidth())
