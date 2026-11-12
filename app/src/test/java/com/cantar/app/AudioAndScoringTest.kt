@@ -8,6 +8,28 @@ import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.random.Random
 
+class AudioPitchShiftTest {
+    @Test
+    fun semitoneShiftChangesPitchWithoutChangingPlaybackSpeed() {
+        val lower = AudioPitchShift.playbackParameters(-12)
+        val unchanged = AudioPitchShift.playbackParameters(0)
+        val higher = AudioPitchShift.playbackParameters(12)
+
+        assertEquals(1f, lower.speed, 0f)
+        assertEquals(0.5f, lower.pitch, 0.0001f)
+        assertEquals(1f, unchanged.speed, 0f)
+        assertEquals(1f, unchanged.pitch, 0.0001f)
+        assertEquals(1f, higher.speed, 0f)
+        assertEquals(2f, higher.pitch, 0.0001f)
+    }
+
+    @Test
+    fun clampsPitchShiftToOneOctave() {
+        assertEquals(0.5f, AudioPitchShift.playbackParameters(-99).pitch, 0.0001f)
+        assertEquals(2f, AudioPitchShift.playbackParameters(99).pitch, 0.0001f)
+    }
+}
+
 class PitchAnalyzerTest {
     @Test
     fun detects440HzTone() {
