@@ -8,6 +8,67 @@ import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.random.Random
 
+
+class MidiReferenceParserTest {
+    @Test
+    fun parsesTrackNameAndTempoToMilliseconds() {
+        val midi = byteArrayOf(
+            0x4D, 0x54, 0x68, 0x64, 0x00, 0x00, 0x00, 0x06,
+            0x00, 0x01, 0x00, 0x01, 0x01, 0xE0,
+            0x4D, 0x54, 0x72, 0x6B, 0x00, 0x00, 0x00, 0x1C,
+            0x00, 0xFF.toByte(), 0x03, 0x04, 0x4C, 0x65, 0x61, 0x64,
+            0x00, 0xFF.toByte(), 0x51, 0x03, 0x07, 0xA1.toByte(), 0x20,
+            0x00, 0x90.toByte(), 0x3C, 0x5A,
+            0x83.toByte(), 0x60, 0x80.toByte(), 0x3C, 0x00,
+            0x00, 0xFF.toByte(), 0x2F, 0x00
+        )
+
+        val result = MidiReferenceParser.parse(midi)
+        val track = result.tracks.single()
+        val note = track.referenceNotes.single()
+
+        assertEquals("Lead", track.name)
+        assertEquals(480, result.ticksPerQuarter)
+        assertEquals(1, track.rawNoteCount)
+        assertEquals(0L, note.startMs)
+        assertEquals(500L, note.durationMs)
+        assertEquals(60, note.midiNote)
+    }
+
+    @Test
+    fun reducesPolyphonicTrackToHighestActiveNote() {
+        val midi = byteArrayOf(
+            0x4D, 0x54, 0x68, 0x64, 0x00, 0x00, 0x00, 0x06,
+            0x00, 0x01, 0x00, 0x01, 0x01, 0xE0,
+            0x4D, 0x54, 0x72, 0x6B, 0x00, 0x00, 0x00, 0x17,
+            0x00, 0x90.toByte(), 0x3C, 0x5A,
+            0x81.toByte(), 0x70, 0x90.toByte(), 0x43, 0x5A,
+            0x81.toByte(), 0x70, 0x80.toByte(), 0x43, 0x00,
+            0x81.toByte(), 0x70, 0x80.toByte(), 0x3C, 0x00,
+            0x00, 0xFF.toByte(), 0x2F, 0x00
+        )
+
+        val notes = MidiReferenceParser.parse(midi).tracks.single().referenceNotes
+
+        assertEquals(3, notes.size)
+        assertEquals(60, notes[0].midiNote)
+        assertEquals(67, notes[1].midiNote)
+        assertEquals(60, notes[2].midiNote)
+        assertEquals(250L, notes[0].durationMs)
+        assertEquals(250L, notes[1].durationMs)
+        assertEquals(250L, notes[2].durationMs)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsSmpteTimingInsteadOfGuessingTempo() {
+        val midi = byteArrayOf(
+            0x4D, 0x54, 0x68, 0x64, 0x00, 0x00, 0x00, 0x06,
+            0x00, 0x00, 0x00, 0x01, 0xE7.toByte(), 0x28
+        )
+        MidiReferenceParser.parse(midi)
+    }
+}
+
 class AudioPitchShiftTest {
     @Test
     fun semitoneShiftChangesPitchWithoutChangingPlaybackSpeed() {
