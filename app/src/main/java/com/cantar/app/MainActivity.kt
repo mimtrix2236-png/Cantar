@@ -202,6 +202,9 @@ class MainActivity:ComponentActivity(){
  val currentSongKey="${selected.artist}|${selected.title}"
  var referenceCsv by remember { mutableStateOf(if(savedReferenceKey==currentSongKey) prefs.getString("reference_csv","") ?: "" else "") }
  var referenceNotes by remember { mutableStateOf(if(referenceCsv.isBlank()) emptyList() else runCatching{MelodyReferenceParser.parseCsv(referenceCsv)}.getOrDefault(emptyList())) }
+ var midiTracks by remember { mutableStateOf(emptyList<MidiTrackOption>()) }
+ var selectedMidiTrackIndex by remember { mutableIntStateOf(0) }
+ var midiError by remember { mutableStateOf("") }
  var referenceError by remember { mutableStateOf("") }
  var pitchTrace by remember { mutableStateOf(emptyList<PitchTracePoint>()) }
  var scoreSnapshot by remember { mutableStateOf(ScoringSnapshot(totalNotes=referenceNotes.size)) }
@@ -231,6 +234,8 @@ class MainActivity:ComponentActivity(){
    val parsed=MelodyReferenceParser.parseCsv(raw)
    referenceCsv=raw
    referenceNotes=parsed
+   midiTracks=emptyList()
+   midiError=""
    referenceError=""
    scoreSnapshot=ScoringSnapshot(totalNotes=parsed.size)
    prefs.edit().putString("reference_csv",raw).putString("reference_song_key","${selected.artist}|${selected.title}").apply()
@@ -239,6 +244,20 @@ class MainActivity:ComponentActivity(){
    referenceCsv=""
    referenceNotes=emptyList()
    prefs.edit().remove("reference_csv").remove("reference_song_key").apply()
+  }
+ }
+ val midiPicker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->
+  if(uri!=null) try {
+   val bytes=context.contentResolver.openInputStream(uri)?.use{it.readBytes()}
+    ?: throw IllegalArgumentException("No se pudo leer el archivo MIDI.")
+   val parsed=MidiReferenceParser.parse(bytes)
+   midiTracks=parsed.tracks
+   selectedMidiTrackIndex=0
+   midiError=""
+  } catch(error:Exception) {
+   midiTracks=emptyList()
+   selectedMidiTrackIndex=0
+   midiError=error.message ?: "No se pudo importar el MIDI."
   }
  }
  var audioError by remember { mutableStateOf("") }
@@ -271,6 +290,9 @@ class MainActivity:ComponentActivity(){
  fun clearReference(){
   referenceCsv=""
   referenceNotes=emptyList()
+  midiTracks=emptyList()
+  selectedMidiTrackIndex=0
+  midiError=""
   referenceError=""
   scoreSnapshot=ScoringSnapshot()
   prefs.edit().remove("reference_csv").remove("reference_song_key").apply()
@@ -330,6 +352,20 @@ class MainActivity:ComponentActivity(){
    }
    page=Page.RESULT
   }
+ }
+ fun useSelectedMidiTrack(){
+  val track=midiTracks.getOrNull(selectedMidiTrackIndex) ?: return
+  val csv=buildString {
+   append("start_ms,duration_ms,midi_note\\n")
+   track.referenceNotes.forEach { note ->
+    append(note.startMs).append(',').append(note.durationMs).append(',').append(note.midiNote).append('\\n')
+   }
+  }
+  referenceCsv=csv
+  referenceNotes=track.referenceNotes
+  referenceError=""
+  scoreSnapshot=ScoringSnapshot(totalNotes=track.referenceNotes.size)
+  prefs.edit().putString("reference_csv",csv).putString("reference_song_key","${selected.artist}|${selected.title}").apply()
  }
  fun saveProfile(){
   prefs.edit().putString("profile_name",profileName.trim()).putString("opponent_name",opponent.trim())
@@ -432,6 +468,17 @@ class MainActivity:ComponentActivity(){
      OutlinedButton(onClick={referencePicker.launch(arrayOf("text/csv","text/plain","application/octet-stream"))},modifier=Modifier.fillMaxWidth()){Text("Importar melodía de referencia (.CSV)")}
      Text(if(referenceNotes.isEmpty())"Sin melodía de referencia: no se calcularán puntos por nota." else "Melodía cargada: ${referenceNotes.size} notas · puntuación nota por nota activa.",color=if(referenceNotes.isEmpty())gold else green,fontSize=11.sp)
      Text("Formato CSV: start_ms,duration_ms,midi_note. Los tiempos se miden desde el inicio del audio.",color=muted,fontSize=10.sp)
+     OutlinedButton(onClick={midiPicker.launch(arrayOf("audio/midi","audio/x-midi","application/octet-stream"))},modifier=Modifier.fillMaxWidth()){Text("Importar melodía MIDI (.mid)") }
+     if(midiError.isNotBlank())Text(midiError,color=gold,fontSize=11.sp)
+     if(midiTracks.isNotEmpty()){
+      Text("Elegí una pista MIDI. En pistas con acordes se toma la nota más aguda activa como guía monofónica.",color=muted,fontSize=10.sp)
+      Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+       midiTracks.forEachIndexed { index, track ->
+        FilterChip(selected=selectedMidiTrackIndex==index,onClick={selectedMidiTrackIndex=index},label={Text("${track.name} · ${track.referenceNotes.size} notas")})
+       }
+      }
+      OutlinedButton(onClick={useSelectedMidiTrack},modifier=Modifier.fillMaxWidth()){Text("Usar pista MIDI seleccionada")}
+     }
      if(referenceError.isNotBlank())Text(referenceError,color=gold,fontSize=11.sp)
      if(selectedAudioUri!=null){
       Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
