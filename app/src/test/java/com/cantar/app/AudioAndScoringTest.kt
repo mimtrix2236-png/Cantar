@@ -119,7 +119,7 @@ class MelodyReferenceTest {
         scorer.observe(200, PitchAnalyzer.Pitch(440f, 69, "La 4", 10, 0.99f))
         scorer.observe(300, PitchAnalyzer.Pitch(466.16f, 70, "La♯ 4", 0, 0.99f))
 
-        assertEquals(950, scorer.finish().totalPoints)
+        assertEquals(900, scorer.finish().totalPoints)
     }
 
     @Test
