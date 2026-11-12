@@ -13,7 +13,9 @@ Aplicación Android nativa de karaoke y entrenamiento vocal, con interfaz azul o
 - Reproducción local con AndroidX Media3 ExoPlayer.
 - Transposición de -12 a +12 semitonos mediante PlaybackParameters, manteniendo speed = 1.0 y modificando el factor de pitch.
 - Captura de micrófono con AudioRecord y estimación de frecuencia fundamental mediante YIN.
-- Importación de una melodía de referencia monofónica CSV, sincronizada por milisegundos desde el inicio del archivo de audio.
+- Importación de una melodía de referencia CSV, sincronizada por milisegundos desde el inicio del archivo de audio.
+- Importación de MIDI estándar tipo 0/1 con tiempo PPQ; permite elegir la pista y convertirla a una guía monofónica usando la nota más aguda activa cuando hay acordes.
+- Captura vocal que prefiere entrada sin procesar cuando el teléfono la declara compatible y activa cancelación de eco/reducción de ruido solo si el dispositivo ofrece esos efectos.
 - Gráfico de notas objetivo y trazo vocal; indicador verde dentro de ±50 cents y ámbar fuera de tolerancia.
 - Puntuación final normalizada de 0 a 1.000 puntos, calculada nota por nota a partir del error mediano de afinación de las muestras detectadas.
 - Historial y mejores marcas guardados localmente.
@@ -23,7 +25,7 @@ Aplicación Android nativa de karaoke y entrenamiento vocal, con interfaz azul o
 Para que la puntuación sea real y no una estimación inventada, hacen falta dos archivos del mismo arreglo:
 
 1. Un archivo de audio que el usuario tenga derecho a reproducir.
-2. Una referencia melódica CSV con tiempos relativos al comienzo de ese audio.
+2. Una referencia melódica CSV o un archivo MIDI compatible con tiempos musicales. El MIDI se convierte a milisegundos usando su tempo y resolución PPQ.
 
 Formato requerido:
 
@@ -42,7 +44,7 @@ Las tres filas numéricas anteriores son un ejemplo didáctico de formato, no co
 - Las notas deben estar ordenadas y no superponerse.
 - También se acepta el encabezado `start_ms,end_ms,midi_note`.
 
-Al importar el CSV, Cantar ajusta las notas objetivo con la misma transposición aplicada al audio. Hay una plantilla en `docs/melody-reference-template.csv`. Si falta el audio o la referencia, la aplicación no presenta una puntuación como si fuera una evaluación real.
+Al importar el CSV, Cantar ajusta las notas objetivo con la misma transposición aplicada al audio. Hay una plantilla en `docs/melody-reference-template.csv`. En MIDI polifónico, la app sigue la nota más aguda activa de la pista elegida; esto es una reducción práctica, no una transcripción inteligente de la melodía. Si falta el audio o la referencia, la aplicación no presenta una puntuación como si fuera una evaluación real.
 
 ## Compatibilidad y permisos
 
@@ -65,7 +67,7 @@ Abrir el proyecto en Android Studio y ejecutar la tarea `:app:assembleDebug` des
 gradle :app:testDebugUnitTest :app:assembleDebug
 ```
 
-GitHub Actions ejecuta `:app:testDebugUnitTest` y `:app:assembleDebug` en cada push a `main`, sin publicar ni adjuntar el APK como artefacto. Las pruebas unitarias cubren una señal de 440 Hz, una fundamental con segundo armónico más fuerte, silencio, importación CSV, tolerancia de afinación y transposición. La existencia de un workflow no sustituye las pruebas en un teléfono real.
+GitHub Actions ejecuta `:app:testDebugUnitTest` y `:app:assembleDebug` en cada push a `main`, sin publicar ni adjuntar el APK como artefacto. Las pruebas unitarias cubren señales de 440 Hz y 110 Hz a 48 kHz con segundo armónico dominante, silencio, puntuación robusta por mediana, importación CSV/MIDI, tempo MIDI, reducción polifónica, tolerancia de afinación y transposición con velocidad 1×. La existencia de un workflow no sustituye las pruebas en un teléfono real.
 
 ## Alcance y limitaciones conocidas
 
@@ -78,4 +80,4 @@ GitHub Actions ejecuta `:app:testDebugUnitTest` y `:app:assembleDebug` en cada p
 
 ## Privacidad
 
-La captura de voz se procesa localmente mediante AudioRecord. El audio no se sube a LRCLIB ni a YouTube desde el analizador vocal.
+La captura de voz se procesa localmente mediante AudioRecord. La cancelación de eco (AEC) y la reducción de ruido (NS) se activan únicamente si el dispositivo las implementa; no todos los teléfonos ofrecen esos efectos. Para evitar que el acompañamiento se cuele por el micrófono, se recomiendan auriculares cuando la TV o el teléfono reproducen por altavoz. El audio no se sube a LRCLIB ni a YouTube desde el analizador vocal.
