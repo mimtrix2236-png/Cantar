@@ -99,6 +99,24 @@ object PitchAnalyzer {
             if (normalized[candidate] > 0.32f) return null
         }
 
+        // A strong second harmonic can make the first YIN threshold crossing
+        // look like an octave-up note. Prefer a convincing double-period minimum
+        // when its normalized difference is substantially lower.
+        while (candidate * 2 <= maxTau) {
+            val doubled = candidate * 2
+            val searchStart = (doubled - 2).coerceAtLeast(minTau)
+            val searchEnd = (doubled + 2).coerceAtMost(maxTau)
+            if (searchStart > searchEnd) break
+            val subharmonic = (searchStart..searchEnd).minByOrNull { normalized[it] } ?: break
+            if (normalized[subharmonic] < normalized[candidate] * 0.65f &&
+                normalized[subharmonic] < 0.20f
+            ) {
+                candidate = subharmonic
+            } else {
+                break
+            }
+        }
+
         val refinedTau = if (candidate > minTau && candidate < maxTau) {
             val left = normalized[candidate - 1]
             val center = normalized[candidate]
