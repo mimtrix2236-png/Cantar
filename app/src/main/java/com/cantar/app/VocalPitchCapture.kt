@@ -45,6 +45,7 @@ fun VocalPitchCapture(
 
     LaunchedEffect(recording) {
         if (!recording) {
+            effectsMessage = "Los filtros de audio se activan solo durante la captura."
             onPitch(null)
             return@LaunchedEffect
         }
