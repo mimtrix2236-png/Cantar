@@ -14,8 +14,22 @@ data class ReferenceNote(
 data class PitchTracePoint(
     val timeMs: Long,
     val midiValue: Float,
-    val inTune: Boolean
+    val inTune: Boolean,
+    /** True when this point marks an unvoiced gap and must break the plotted line. */
+    val breakBefore: Boolean = false
 )
+
+/** Prevents the live trace from drawing through silence or unvoiced microphone frames. */
+fun canConnectPitchTrace(
+    previous: PitchTracePoint,
+    next: PitchTracePoint,
+    maxGapMs: Long = 220L
+): Boolean =
+    !previous.breakBefore &&
+        !next.breakBefore &&
+        previous.midiValue.isFinite() &&
+        next.midiValue.isFinite() &&
+        (next.timeMs - previous.timeMs) in 1L..maxGapMs
 
 data class NoteScore(
     val noteIndex: Int,
