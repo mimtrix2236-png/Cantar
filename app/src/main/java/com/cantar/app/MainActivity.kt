@@ -15,6 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -453,7 +454,7 @@ class MainActivity:ComponentActivity(){
       }
      }
     }
-    Page.SETUP->Column(Modifier.fillMaxSize().padding(20.dp),horizontalAlignment=Alignment.CenterHorizontally){
+    Page.SETUP->Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),horizontalAlignment=Alignment.CenterHorizontally){
      Header("Configurar canción"){page=Page.LIBRARY}
      Spacer(Modifier.height(22.dp));Panel { Text(selected.title,fontSize=23.sp,fontWeight=FontWeight.Bold);Text(selected.artist,color=muted);Text("Tonalidad original: no verificada",color=gold) }
      Spacer(Modifier.height(12.dp))
@@ -495,7 +496,7 @@ class MainActivity:ComponentActivity(){
      Text(if(shift==0)"Tono original no verificado" else "Transposición ${if(shift>0)"+" else ""}$shift semitonos",fontSize=20.sp,color=green,fontWeight=FontWeight.Bold)
      Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){listOf(-2,-1,0,1,2).forEach{n->OutlinedButton({shift=if(n==0)0 else (shift+n).coerceIn(-12,12)}){Text(if(n==0)"Normal" else if(n<0)"Más bajo\n($n)" else "Más alto\n(+$n)")}}}
      Text("Ajuste de −12 a +12 semitonos",color=muted,fontSize=12.sp)
-     Spacer(Modifier.weight(1f));HomeButton("▶  Comenzar a cantar",green){
+     Spacer(Modifier.height(16.dp));HomeButton("▶  Comenzar a cantar",green){
       points=0;duelRound=1;firstDuelScore=0;secondDuelScore=0;scoreSnapshot=ScoringSnapshot(totalNotes=referenceNotes.size)
       pitchTrace=emptyList();livePitch=null;scoringAvailable=false;playbackStarted=false;currentPositionMs=0L
       if(selectedAudioUri!=null){player.seekTo(0);player.play();playerPlaying=true;playbackStarted=true}
