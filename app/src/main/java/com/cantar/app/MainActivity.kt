@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.content.Intent
 import android.provider.Settings
 import android.net.Uri
+import java.io.ByteArrayOutputStream
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -252,8 +253,19 @@ class MainActivity:ComponentActivity(){
  }
  val midiPicker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->
   if(uri!=null) try {
-   val bytes=context.contentResolver.openInputStream(uri)?.use{it.readBytes()}
-    ?: throw IllegalArgumentException("No se pudo leer el archivo MIDI.")
+   val bytes=context.contentResolver.openInputStream(uri)?.use { input ->
+    val output=ByteArrayOutputStream()
+    val buffer=ByteArray(8_192)
+    var total=0
+    while(true){
+     val count=input.read(buffer)
+     if(count<0) break
+     total+=count
+     require(total<=5_242_880) { "El MIDI supera el límite de 5 MB." }
+     output.write(buffer,0,count)
+    }
+    output.toByteArray()
+   } ?: throw IllegalArgumentException("No se pudo leer el archivo MIDI.")
    val parsed=MidiReferenceParser.parse(bytes)
    midiTracks=parsed.tracks
    selectedMidiTrackIndex=0
