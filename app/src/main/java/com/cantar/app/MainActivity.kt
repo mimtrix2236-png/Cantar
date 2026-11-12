@@ -1,6 +1,8 @@
 package com.cantar.app
 
 import android.content.Context
+import android.Manifest
+import android.content.pm.PackageManager
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.os.Bundle
@@ -158,6 +160,7 @@ class MainActivity:ComponentActivity(){
  var points by remember { mutableIntStateOf(0) }
  var livePitch by remember { mutableStateOf<PitchAnalyzer.Pitch?>(null) }
  var selectedAudioUri by remember { mutableStateOf(prefs.getString("selected_audio_uri", null)) }
+ var micPermissionGranted by remember { mutableStateOf(context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) }
  var lyricLines by remember { mutableStateOf(emptyList<LyricLine>()) }
  var currentPositionMs by remember { mutableLongStateOf(0L) }
  var playerPlaying by remember { mutableStateOf(false) }
@@ -368,6 +371,34 @@ class MainActivity:ComponentActivity(){
   scoreSnapshot=ScoringSnapshot(totalNotes=track.referenceNotes.size)
   prefs.edit().putString("reference_csv",csv).putString("reference_song_key","${selected.artist}|${selected.title}").apply()
  }
+ fun beginSession(){
+  points=0
+  duelRound=1
+  firstDuelScore=0
+  secondDuelScore=0
+  scoreSnapshot=ScoringSnapshot(totalNotes=referenceNotes.size)
+  pitchTrace=emptyList()
+  livePitch=null
+  scoringAvailable=false
+  playbackStarted=false
+  currentPositionMs=0L
+  if(selectedAudioUri!=null){
+   player.seekTo(0)
+   player.play()
+   playerPlaying=true
+   playbackStarted=true
+  }
+  page=Page.SING
+ }
+ val micPermissionLauncher=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()){granted->
+  micPermissionGranted=granted
+  beginSession()
+ }
+ fun startSession(){
+  micPermissionGranted=context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED
+  if(micPermissionGranted) beginSession()
+  else micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+ }
  fun saveProfile(){
   prefs.edit().putString("profile_name",profileName.trim()).putString("opponent_name",opponent.trim())
    .putString("mode",mode.name).putStringSet("favorites",favorites).apply()
@@ -496,12 +527,7 @@ class MainActivity:ComponentActivity(){
      Text(if(shift==0)"Tono original no verificado" else "Transposición ${if(shift>0)"+" else ""}$shift semitonos",fontSize=20.sp,color=green,fontWeight=FontWeight.Bold)
      Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){listOf(-2,-1,0,1,2).forEach{n->OutlinedButton({shift=if(n==0)0 else (shift+n).coerceIn(-12,12)}){Text(if(n==0)"Normal" else if(n<0)"Más bajo\n($n)" else "Más alto\n(+$n)")}}}
      Text("Ajuste de −12 a +12 semitonos",color=muted,fontSize=12.sp)
-     Spacer(Modifier.height(16.dp));HomeButton("▶  Comenzar a cantar",green){
-      points=0;duelRound=1;firstDuelScore=0;secondDuelScore=0;scoreSnapshot=ScoringSnapshot(totalNotes=referenceNotes.size)
-      pitchTrace=emptyList();livePitch=null;scoringAvailable=false;playbackStarted=false;currentPositionMs=0L
-      if(selectedAudioUri!=null){player.seekTo(0);player.play();playerPlaying=true;playbackStarted=true}
-      page=Page.SING
-     }
+     Spacer(Modifier.height(16.dp));HomeButton("▶  Comenzar a cantar",green){startSession()}
     }
     Page.SING->BoxWithConstraints(Modifier.fillMaxSize().padding(8.dp)){
      val compact=maxHeight<500.dp
@@ -550,7 +576,7 @@ class MainActivity:ComponentActivity(){
            pitchTrace=(pitchTrace+PitchTracePoint(position,pitch.midiNote+pitch.cents/100f,target!=null && kotlin.math.abs(error)<=50f)).takeLast(240)
           }
          }
-        },modifier=Modifier.fillMaxWidth())
+        },autoStart=micPermissionGranted,onPermissionGranted={micPermissionGranted=true},modifier=Modifier.fillMaxWidth())
        }
       }
       if(!compact)Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
