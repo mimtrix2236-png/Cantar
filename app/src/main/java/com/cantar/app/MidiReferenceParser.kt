@@ -89,7 +89,7 @@ object MidiReferenceParser {
         val header = Cursor(bytes, 0, bytes.size)
         require(header.readAscii(4) == "MThd") { "El archivo no tiene una cabecera MIDI válida." }
         val headerLength = header.readU32()
-        require(headerLength in 6..1024 && 8L + headerLength <= bytes.size) {
+        require(headerLength in 6L..1024L && 8L + headerLength <= bytes.size) {
             "La cabecera MIDI está incompleta o no es válida."
         }
         val headerData = Cursor(bytes, 8, 8 + headerLength.toInt())
