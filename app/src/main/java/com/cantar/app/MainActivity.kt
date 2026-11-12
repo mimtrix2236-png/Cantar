@@ -211,6 +211,7 @@ class MainActivity:ComponentActivity(){
  var duelRound by remember { mutableIntStateOf(1) }
  var firstDuelScore by remember { mutableIntStateOf(0) }
  var secondDuelScore by remember { mutableIntStateOf(0) }
+ var firstDuelSnapshot by remember { mutableStateOf(ScoringSnapshot()) }
  var duelHistory by remember { mutableStateOf(prefs.getString("duel_history", "") ?: "") }
  var sessions by remember { mutableIntStateOf(prefs.getInt("sessions",0)) }
  var bestScore by remember { mutableIntStateOf(prefs.getInt("best_score",0)) }
@@ -347,6 +348,7 @@ class MainActivity:ComponentActivity(){
   playerPlaying=false
   if(canScore && mode==PlayMode.DUEL && duelRound==1){
    firstDuelScore=points
+   firstDuelSnapshot=scoreSnapshot
    duelRound=2
    points=0
    scoreSnapshot=ScoringSnapshot(totalNotes=referenceNotes.size)
@@ -402,6 +404,7 @@ class MainActivity:ComponentActivity(){
   duelRound=1
   firstDuelScore=0
   secondDuelScore=0
+  firstDuelSnapshot=ScoringSnapshot(totalNotes=referenceNotes.size)
   scoreSnapshot=ScoringSnapshot(totalNotes=referenceNotes.size)
   pitchTrace=emptyList()
   livePitch=null
@@ -625,11 +628,14 @@ class MainActivity:ComponentActivity(){
       },
       color=muted
      )
-     if(scoringAvailable)Text("${scoreSnapshot.correctNotes} notas afinadas de ${scoreSnapshot.evaluatedNotes} evaluadas · ${scoreSnapshot.accuracyPercent}% de acierto",color=cyan,fontSize=13.sp)
-     if(scoringAvailable && scoreSnapshot.detectedNotes==0)Text("No se detectó voz durante la pista; revisá el permiso del micrófono.",color=gold,fontSize=12.sp)
+     if(scoringAvailable && mode==PlayMode.SOLO)Text("${scoreSnapshot.correctNotes} notas afinadas de ${scoreSnapshot.evaluatedNotes} evaluadas · ${scoreSnapshot.accuracyPercent}% de acierto",color=cyan,fontSize=13.sp)
+     if(scoringAvailable && mode==PlayMode.SOLO && scoreSnapshot.detectedNotes==0)Text("No se detectó voz durante la pista; revisá el permiso del micrófono.",color=gold,fontSize=12.sp)
      if(mode==PlayMode.DUEL && scoringAvailable){
       Text("${profileName.ifBlank{"Jugador 1"}}  vs  ${opponent.ifBlank{"Jugador 2"}}",color=cyan)
       Text("Resultado del duelo: ${firstDuelScore} - ${secondDuelScore}",color=gold)
+      Text("${profileName.ifBlank{"Jugador 1"}}: ${firstDuelSnapshot.correctNotes}/${firstDuelSnapshot.evaluatedNotes} notas afinadas · ${firstDuelSnapshot.accuracyPercent}%",color=cyan,fontSize=12.sp)
+      Text("${opponent.ifBlank{"Jugador 2"}}: ${scoreSnapshot.correctNotes}/${scoreSnapshot.evaluatedNotes} notas afinadas · ${scoreSnapshot.accuracyPercent}%",color=cyan,fontSize=12.sp)
+      if(firstDuelSnapshot.detectedNotes==0 || scoreSnapshot.detectedNotes==0)Text("En uno de los turnos no se detectó voz; revisá el micrófono.",color=gold,fontSize=11.sp)
       Text(if(firstDuelScore>secondDuelScore) "Ganó ${profileName.ifBlank{"Jugador 1"}}" else if(secondDuelScore>firstDuelScore) "Ganó ${opponent.ifBlank{"Jugador 2"}}" else "Empate",color=green)
       Text("Historial local guardado",color=muted,fontSize=12.sp)
      } else if(mode==PlayMode.DUEL){
