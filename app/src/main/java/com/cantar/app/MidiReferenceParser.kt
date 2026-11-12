@@ -45,7 +45,7 @@ object MidiReferenceParser {
                 readU8().toLong()
 
         fun readAscii(length: Int): String {
-            require(length >= 0 && position + length <= limit) { "El archivo MIDI está truncado." }
+            require(length >= 0 && length <= limit - position) { "El archivo MIDI está truncado." }
             val value = String(data, position, length, Charsets.US_ASCII)
             position += length
             return value
@@ -201,6 +201,7 @@ object MidiReferenceParser {
                     val channel = status and 0x0F
                     val data1 = firstData ?: cursor.readU8()
                     val data2 = if (command == 0xC0 || command == 0xD0) 0 else cursor.readU8()
+                    require(data1 in 0..127 && data2 in 0..127) { "Dato de canal MIDI fuera de rango." }
                     if (command == 0x80 || (command == 0x90 && data2 == 0)) {
                         val key = channel to data1
                         val starts = active[key]
