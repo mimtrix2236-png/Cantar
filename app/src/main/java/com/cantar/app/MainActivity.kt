@@ -128,7 +128,7 @@ private val library=listOf(
  Song("Calm Down","Rema","No verificada","Afrobeats","Inglés"),
  Song("Ode to Joy","Ludwig van Beethoven","No verificada","Clásica","Instrumental")
 )
-private val styles=listOf("Todos","Rock nacional","Pop latino","Rock","Pop","Reguetón","Urbano latino","Cumbia","Cumbia villera","Cuarteto","Salsa","Bachata","Merengue","Vallenato","Tango","Chamamé","Milonga","Folklore","Latin rock","Bolero","Bossa nova","Samba","Forró","Sertanejo","Regional mexicano","Jazz","Blues","R&B","Hip-hop","Rap","Reggae","Electrónica","Dance","Disco","Country","Metal","Grunge","Synth pop","Eurodance","Instrumental","Indie","Funk","Gospel","Chanson","K-pop","J-pop","Afrobeats","Flamenco","Clásica")
+private val styles=listOf("Todos","Rock nacional","Pop latino","Rock","Pop","Reguetón","Urbano latino","Cumbia","Cumbia villera","Cuarteto","Salsa","Bachata","Merengue","Vallenato","Tango","Chamamé","Milonga","Folklore","Latin rock","Bolero","Bossa nova","Samba","Forró","Sertanejo","Regional mexicano","Jazz","Blues","R&B","Hip-hop","Rap","Reggae","Electrónica","Dance","Disco","Country","Metal","Grunge","Synth pop","Eurodance","Indie","Funk","Gospel","Chanson","K-pop","J-pop","Afrobeats","Flamenco","Clásica")
 private enum class Page { HOME, PROFILE, LIBRARY, SETUP, SING, RESULT, HISTORY, SETTINGS }
 private enum class PlayMode { SOLO, DUEL }
 private data class LyricLine(val timeMs: Long, val text: String)
