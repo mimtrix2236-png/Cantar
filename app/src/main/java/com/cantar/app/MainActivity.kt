@@ -612,6 +612,10 @@ class MainActivity:ComponentActivity(){
        Text(if(playerPlaying)"● REPRODUCIENDO" else "PAUSADO",color=if(playerPlaying)green else gold,fontSize=11.sp,modifier=Modifier.weight(1f))
        TextButton(onClick={if(player.isPlaying){player.pause();playerPlaying=false}else if(selectedAudioUri!=null){player.play();playerPlaying=true}}){Text(if(playerPlaying)"Pausar" else "Reproducir",color=cyan)}
        TextButton(onClick={finishRound()}){Text(if(mode==PlayMode.DUEL && duelRound==1)"Finalizar turno 1" else "Finalizar",color=green)}
+      } else Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
+       Text(if(playerPlaying)"●" else "PAUSA",color=if(playerPlaying)green else gold,fontSize=9.sp,modifier=Modifier.weight(1f))
+       TextButton(onClick={if(player.isPlaying){player.pause();playerPlaying=false}else if(selectedAudioUri!=null){player.play();playerPlaying=true}},contentPadding=PaddingValues(horizontal=4.dp,vertical=0.dp)){Text(if(playerPlaying)"Pausa" else "Play",color=cyan,fontSize=10.sp)}
+       TextButton(onClick={finishRound()},contentPadding=PaddingValues(horizontal=4.dp,vertical=0.dp)){Text(if(mode==PlayMode.DUEL && duelRound==1)"Turno 1 listo" else "Finalizar",color=green,fontSize=10.sp)}
       }
      }
     }
