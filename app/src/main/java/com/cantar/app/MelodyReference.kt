@@ -81,7 +81,7 @@ object MelodyReferenceParser {
             }
 
             require(start >= 0L) { "Fila ${index + 2}: el tiempo no puede ser negativo." }
-            require(duration in 40L..15_000L) { "Fila ${index + 2}: duración fuera de rango (40–15000 ms)." }
+            require(duration in 40L..600_000L) { "Fila ${index + 2}: duración fuera de rango (40–600000 ms)." }
             require(midi in 0..127) { "Fila ${index + 2}: MIDI debe estar entre 0 y 127." }
             ReferenceNote(start, duration, midi)
         }.sortedBy { it.startMs }
