@@ -249,3 +249,40 @@ class MelodyReferenceTest {
         )
     }
 }
+
+
+class PitchTraceContinuityTest {
+    @Test
+    fun connectsAdjacentVoicedFrames() {
+        val previous = PitchTracePoint(100L, 69.0f, true)
+        val next = PitchTracePoint(165L, 69.1f, true)
+
+        org.junit.Assert.assertTrue(canConnectPitchTrace(previous, next))
+    }
+
+    @Test
+    fun breaksLineAtUnvoicedFrame() {
+        val previous = PitchTracePoint(100L, 69.0f, true)
+        val silence = PitchTracePoint(145L, Float.NaN, false, breakBefore = true)
+        val resumed = PitchTracePoint(190L, 69.1f, true)
+
+        org.junit.Assert.assertFalse(canConnectPitchTrace(previous, silence))
+        org.junit.Assert.assertFalse(canConnectPitchTrace(silence, resumed))
+    }
+
+    @Test
+    fun doesNotConnectAcrossLongUnvoicedGap() {
+        val previous = PitchTracePoint(100L, 69.0f, true)
+        val next = PitchTracePoint(400L, 69.1f, true)
+
+        org.junit.Assert.assertFalse(canConnectPitchTrace(previous, next))
+    }
+
+    @Test
+    fun rejectsNonIncreasingTraceTimes() {
+        val previous = PitchTracePoint(200L, 69.0f, true)
+        val next = PitchTracePoint(200L, 69.1f, true)
+
+        org.junit.Assert.assertFalse(canConnectPitchTrace(previous, next))
+    }
+}
