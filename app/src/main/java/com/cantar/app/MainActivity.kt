@@ -44,7 +44,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import androidx.media3.common.MediaItem
-import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.PlaybackException
 import androidx.media3.exoplayer.ExoPlayer
@@ -189,7 +188,7 @@ class MainActivity:ComponentActivity(){
    searchingOnline = false
   }
  }
- LaunchedEffect(shift) { player.setPlaybackParameters(PlaybackParameters(1f, Math.pow(2.0, shift / 12.0).toFloat())) }
+ LaunchedEffect(shift) { player.setPlaybackParameters(AudioPitchShift.playbackParameters(shift)) }
  var duelRound by remember { mutableIntStateOf(1) }
  var firstDuelScore by remember { mutableIntStateOf(0) }
  var secondDuelScore by remember { mutableIntStateOf(0) }
