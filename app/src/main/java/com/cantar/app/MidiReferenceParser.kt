@@ -246,7 +246,19 @@ object MidiReferenceParser {
     ): List<ReferenceNote> {
         if (rawNotes.isEmpty()) return emptyList()
         fun toMillis(tick: Long): Long {
-            val segment = tempoSegments.lastOrNull { it.tick <= tick } ?: tempoSegments.first()
+            var low = 0
+            var high = tempoSegments.lastIndex
+            var selected = 0
+            while (low <= high) {
+                val middle = (low + high) ushr 1
+                if (tempoSegments[middle].tick <= tick) {
+                    selected = middle
+                    low = middle + 1
+                } else {
+                    high = middle - 1
+                }
+            }
+            val segment = tempoSegments[selected]
             return (segment.millis + (tick - segment.tick) * segment.microsPerQuarter /
                 (ppq * 1_000.0)).roundToLong().coerceAtLeast(0L)
         }
