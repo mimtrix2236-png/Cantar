@@ -516,10 +516,28 @@ class MainActivity:ComponentActivity(){
     Page.RESULT->Column(Modifier.fillMaxSize().padding(22.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){
      Icon(Icons.Default.EmojiEvents,null,tint=gold,modifier=Modifier.size(90.dp));Text("¡Resultado!",fontSize=30.sp,fontWeight=FontWeight.Bold)
      Text(if(!scoringAvailable)"Puntuación no disponible" else if(mode==PlayMode.DUEL) "${firstDuelScore}  —  ${secondDuelScore}" else lastScore.toString(),fontSize=if(scoringAvailable)52.sp else 24.sp,color=if(scoringAvailable)green else gold,fontWeight=FontWeight.Black)
-     Text(if(scoringAvailable)"puntos · ${if(mode==PlayMode.SOLO)"Partida individual" else "Duelo"}" else "Falta audio local y melodía de referencia para evaluar.",color=muted)
+     Text(
+      if(scoringAvailable) "puntos · ${if(mode==PlayMode.SOLO)"Partida individual" else "Duelo"}"
+      else when {
+       selectedAudioUri==null -> "Importá una pista de audio local para evaluar."
+       referenceNotes.isEmpty() -> "Importá la melodía de referencia correspondiente a esta pista."
+       !playbackStarted -> "La pista no llegó a iniciarse; no se calculó una puntuación."
+       else -> "No se pudo completar la evaluación de audio."
+      },
+      color=muted
+     )
      if(scoringAvailable)Text("${scoreSnapshot.correctNotes} notas afinadas de ${scoreSnapshot.evaluatedNotes} evaluadas · ${scoreSnapshot.accuracyPercent}% de acierto",color=cyan,fontSize=13.sp)
      if(scoringAvailable && scoreSnapshot.detectedNotes==0)Text("No se detectó voz durante la pista; revisá el permiso del micrófono.",color=gold,fontSize=12.sp)
-     if(mode==PlayMode.DUEL){Text("${profileName.ifBlank{"Jugador 1"}}  vs  ${opponent.ifBlank{"Jugador 2"}}",color=cyan);Text("Resultado del duelo: ${firstDuelScore} - ${secondDuelScore}",color=gold);Text(if(firstDuelScore>secondDuelScore) "Ganó ${profileName.ifBlank{"Jugador 1"}}" else if(secondDuelScore>firstDuelScore) "Ganó ${opponent.ifBlank{"Jugador 2"}}" else "Empate",color=green);Text("Historial local guardado",color=muted,fontSize=12.sp)}
+     if(mode==PlayMode.DUEL && scoringAvailable){
+      Text("${profileName.ifBlank{"Jugador 1"}}  vs  ${opponent.ifBlank{"Jugador 2"}}",color=cyan)
+      Text("Resultado del duelo: ${firstDuelScore} - ${secondDuelScore}",color=gold)
+      Text(if(firstDuelScore>secondDuelScore) "Ganó ${profileName.ifBlank{"Jugador 1"}}" else if(secondDuelScore>firstDuelScore) "Ganó ${opponent.ifBlank{"Jugador 2"}}" else "Empate",color=green)
+      Text("Historial local guardado",color=muted,fontSize=12.sp)
+     } else if(mode==PlayMode.DUEL){
+      Text("${profileName.ifBlank{"Jugador 1"}}  vs  ${opponent.ifBlank{"Jugador 2"}}",color=cyan)
+      if(duelRound==2)Text("Turno 1: ${firstDuelScore} puntos · turno 2 sin evaluar",color=gold,fontSize=12.sp)
+      Text("Duelo incompleto: no se declaró ganador ni se guardó un resultado ficticio.",color=gold,fontSize=12.sp)
+     }
      if(scoringAvailable)Text("Mejor marca: $bestScore · Sesiones: $sessions",color=gold)
      HomeButton("Volver al menú",green){page=Page.HOME};HomeButton("Otra canción",purple){page=Page.LIBRARY}
     }
