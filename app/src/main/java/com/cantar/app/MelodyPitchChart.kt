@@ -41,14 +41,15 @@ fun MelodyPitchChart(
             val visibleTrace = trace.filter {
                 it.timeMs in windowStart..windowEnd
             }.sortedBy { it.timeMs }
+            val voicedTrace = visibleTrace.filter { !it.breakBefore && it.midiValue.isFinite() }
 
             // Include detected pitches in the vertical range so a badly missed note
             // remains visible instead of being silently clipped at the chart edge.
             val minReference = (visibleNotes.minOfOrNull { it.midiNote } ?: 48) - 4
-            val minVoice = (visibleTrace.minOfOrNull { it.midiValue }?.toInt() ?: 48) - 2
+            val minVoice = (voicedTrace.minOfOrNull { it.midiValue }?.toInt() ?: 48) - 2
             val minMidi = minOf(minReference, minVoice).coerceAtLeast(0)
             val maxReference = (visibleNotes.maxOfOrNull { it.midiNote } ?: 84) + 4
-            val maxVoice = (visibleTrace.maxOfOrNull { it.midiValue }?.toInt() ?: 84) + 2
+            val maxVoice = (voicedTrace.maxOfOrNull { it.midiValue }?.toInt() ?: 84) + 2
             val maxMidi = maxOf(maxReference, maxVoice).coerceAtMost(127).coerceAtLeast(minMidi + 8)
 
             fun xFor(timeMs: Long): Float =
@@ -85,9 +86,7 @@ fun MelodyPitchChart(
             }
 
             visibleTrace.zipWithNext().forEach { (previous, next) ->
-                val gapMs = next.timeMs - previous.timeMs
-                // Do not draw a misleading straight line across silence or unvoiced frames.
-                if (gapMs in 1L..220L) {
+                if (canConnectPitchTrace(previous, next)) {
                     drawLine(
                         color = if (next.inTune) Color(0xFF24F276) else Color(0xFFFFA52E),
                         start = Offset(xFor(previous.timeMs), yFor(previous.midiValue)),
@@ -97,7 +96,7 @@ fun MelodyPitchChart(
                     )
                 }
             }
-            visibleTrace.lastOrNull()?.let { point ->
+            voicedTrace.lastOrNull()?.let { point ->
                 drawCircle(
                     color = if (point.inTune) Color(0xFF24F276) else Color(0xFFFFA52E),
                     radius = 5.dp.toPx(),
