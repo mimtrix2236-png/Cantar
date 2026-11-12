@@ -302,6 +302,9 @@ class MainActivity:ComponentActivity(){
    referenceError=""
    prefs.edit().remove("reference_csv").remove("reference_song_key").apply()
    if(page!=Page.SETUP){
+    midiTracks=emptyList()
+    selectedMidiTrackIndex=0
+    midiError=""
     val displayName=uri.lastPathSegment?.substringAfterLast('/')?.substringAfterLast(':') ?: "Audio local"
     selected=Song(displayName,"Archivo local","No verificada","Audio local","Local")
     lyricLines=emptyList()
