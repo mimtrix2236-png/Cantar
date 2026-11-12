@@ -63,6 +63,8 @@ object MidiReferenceParser {
             position += length
         }
 
+        fun hasRemaining(): Boolean = position < limit
+
         fun readVariableLength(): Long {
             var value = 0L
             repeat(4) {
@@ -150,7 +152,7 @@ object MidiReferenceParser {
         val tempos = mutableListOf<TempoChange>()
         val active = mutableMapOf<Pair<Int, Int>, java.util.ArrayDeque<Long>>()
 
-        while (cursor.position < cursorEnd(cursor)) {
+        while (cursor.hasRemaining()) {
             tick += cursor.readVariableLength()
             val first = cursor.readU8()
             val status: Int
@@ -217,10 +219,6 @@ object MidiReferenceParser {
         }
         return ParsedTrack(name, notes.sortedBy { it.startTick }, tempos)
     }
-
-    // Cursor's limit is intentionally private; reading until a failed read would
-    // hide malformed chunks, so the caller passes the track end as a sentinel.
-    private fun cursorEnd(cursor: Cursor): Int = cursor.limitPosition()
 
     private fun buildTempoSegments(
         changes: List<TempoChange>,
