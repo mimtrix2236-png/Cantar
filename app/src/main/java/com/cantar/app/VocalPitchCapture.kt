@@ -143,6 +143,8 @@ fun VocalPitchCapture(
             } catch (_: IllegalArgumentException) {
                 false
             } finally {
+                try { noiseSuppressor?.release() } catch (_: RuntimeException) {}
+                try { echoCanceler?.release() } catch (_: RuntimeException) {}
                 recorder?.let {
                     try {
                         if (it.recordingState == AudioRecord.RECORDSTATE_RECORDING) it.stop()
