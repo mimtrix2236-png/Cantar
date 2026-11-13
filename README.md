@@ -10,7 +10,8 @@ Aplicación Android nativa de karaoke y entrenamiento vocal, con interfaz azul o
 - Búsqueda de letras en LRCLIB sin API key. LRCLIB proporciona metadatos y letras; no entrega audio.
 - Búsqueda externa de pistas karaoke en YouTube. La app abre la búsqueda, pero no extrae ni reproduce el audio de YouTube.
 - Importación de archivos de audio propios mediante el selector de documentos de Android.
-- Reproducción local con AndroidX Media3 ExoPlayer.
+- Al reemplazar el archivo de audio se limpian la referencia MIDI/CSV y la letra sincronizada anterior para evitar comparar contra datos de otra pista.
+- Reproducción local con AndroidX Media3 ExoPlayer, gestión automática del foco de audio y pausa al desconectar auriculares.
 - Transposición de -12 a +12 semitonos mediante PlaybackParameters, manteniendo speed = 1.0 y modificando el factor de pitch.
 - Captura de micrófono con AudioRecord y estimación de frecuencia fundamental mediante YIN.
 - Importación de una melodía de referencia CSV, sincronizada por milisegundos desde el inicio del archivo de audio.
