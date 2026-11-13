@@ -47,6 +47,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.PlaybackException
@@ -180,7 +182,18 @@ class MainActivity:ComponentActivity(){
  var currentPositionMs by remember { mutableLongStateOf(0L) }
  var playerPlaying by remember { mutableStateOf(false) }
  var playerError by remember { mutableStateOf("") }
- val player = remember(context) { ExoPlayer.Builder(context).build() }
+ val player = remember(context) {
+  ExoPlayer.Builder(context)
+   .setAudioAttributes(
+    AudioAttributes.Builder()
+     .setUsage(C.USAGE_MEDIA)
+     .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+     .build(),
+    true
+   )
+   .setHandleAudioBecomingNoisy(true)
+   .build()
+ }
  DisposableEffect(player) {
   val listener=object:Player.Listener {
    override fun onIsPlayingChanged(isPlaying:Boolean){playerPlaying=isPlaying}
@@ -301,13 +314,14 @@ class MainActivity:ComponentActivity(){
    referenceNotes=emptyList()
    referenceError=""
    prefs.edit().remove("reference_csv").remove("reference_song_key").apply()
+   // A new audio file invalidates any timing data tied to the previous recording.
+   midiTracks=emptyList()
+   selectedMidiTrackIndex=0
+   midiError=""
+   lyricLines=emptyList()
    if(page!=Page.SETUP){
-    midiTracks=emptyList()
-    selectedMidiTrackIndex=0
-    midiError=""
     val displayName=uri.lastPathSegment?.substringAfterLast('/')?.substringAfterLast(':') ?: "Audio local"
     selected=Song(displayName,"Archivo local","No verificada","Audio local","Local")
-    lyricLines=emptyList()
    }
    playbackStarted=false
    audioError=""
