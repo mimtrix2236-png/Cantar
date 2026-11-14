@@ -162,6 +162,40 @@ class PitchAnalyzerTest {
     }
 
     @Test
+    fun detectsLowBassAt55HzAt48k() {
+        val sampleRate = 48_000
+        val samples = ShortArray(4_096) { index ->
+            (sin(2.0 * PI * 55.0 * index / sampleRate) * 12_000.0).toInt().toShort()
+        }
+
+        val pitch = PitchAnalyzer.analyze(samples, sampleRate)
+
+        assertNotNull(pitch)
+        assertEquals(55f, pitch!!.frequencyHz, 1.0f)
+    }
+
+    @Test
+    fun detectsHighSopranoAt1175Hz() {
+        val sampleRate = 44_100
+        val samples = ShortArray(4_096) { index ->
+            (sin(2.0 * PI * 1_174.66 * index / sampleRate) * 12_000.0).toInt().toShort()
+        }
+
+        val pitch = PitchAnalyzer.analyze(samples, sampleRate)
+
+        assertNotNull(pitch)
+        assertEquals(1_174.66f, pitch!!.frequencyHz, 3.0f)
+    }
+
+    @Test
+    fun rejectsBroadbandNoiseWithoutStableFundamental() {
+        val random = Random(42)
+        val samples = ShortArray(4_096) { random.nextInt(-10_000, 10_001).toShort() }
+
+        assertNull(PitchAnalyzer.analyze(samples, 44_100))
+    }
+
+    @Test
     fun rejectsSilence() {
         assertNull(PitchAnalyzer.analyze(ShortArray(4_096), 44_100))
     }
