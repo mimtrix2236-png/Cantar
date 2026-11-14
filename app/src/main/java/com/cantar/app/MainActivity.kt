@@ -181,6 +181,8 @@ class MainActivity:ComponentActivity(){
  var micPermissionMessage by remember { mutableStateOf("") }
  var lyricLines by remember { mutableStateOf(emptyList<LyricLine>()) }
  var currentPositionMs by remember { mutableLongStateOf(0L) }
+ var analysisPositionMs by remember { mutableLongStateOf(0L) }
+ var micFrameCenterOffsetMs by remember { mutableLongStateOf(0L) }
  var playerPlaying by remember { mutableStateOf(false) }
  var playerError by remember { mutableStateOf("") }
  val player = remember(context) {
@@ -258,8 +260,13 @@ class MainActivity:ComponentActivity(){
    lyricLines = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { parseLrc(it.readText()) } ?: emptyList()
   } catch (_: Exception) { lyricLines = emptyList() }
  }
- LaunchedEffect(page, playerPlaying) {
-  while (page == Page.SING && playerPlaying) { currentPositionMs = player.currentPosition; delay(100) }
+ LaunchedEffect(page, playerPlaying, micFrameCenterOffsetMs) {
+  while (page == Page.SING && playerPlaying) {
+   val playbackPosition = player.currentPosition
+   currentPositionMs = playbackPosition
+   analysisPositionMs = compensatePitchFrameTime(playbackPosition, micFrameCenterOffsetMs)
+   delay(100)
+  }
  }
  val referencePicker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->
   if(uri!=null) try {
@@ -373,6 +380,7 @@ class MainActivity:ComponentActivity(){
    livePitch=null
    pitchTrace=emptyList()
    currentPositionMs=0L
+   analysisPositionMs=0L
    player.seekTo(0)
    player.play()
    playerPlaying=true
@@ -429,6 +437,8 @@ class MainActivity:ComponentActivity(){
   scoringAvailable=false
   playbackStarted=false
   currentPositionMs=0L
+  analysisPositionMs=0L
+  micFrameCenterOffsetMs=0L
   if(selectedAudioUri!=null){
    player.seekTo(0)
    player.play()
@@ -592,7 +602,7 @@ class MainActivity:ComponentActivity(){
      val lyricIndex=lyricLines.indexOfLast{it.timeMs<=currentPositionMs}
      val currentLyric=if(lyricLines.isEmpty())"La letra sincronizada aparecerá aquí al conectar una pista online." else lyricLines.getOrNull(lyricIndex)?.text?.ifBlank{"♪"}?:"Preparados..."
      val nextLyric=lyricLines.getOrNull(lyricIndex+1)?.text.orEmpty()
-     val targetNote=scorer.targetAt(currentPositionMs)
+     val targetNote=scorer.targetAt(analysisPositionMs)
      val targetError=if(targetNote!=null && livePitch!=null) (livePitch!!.midiNote-targetNote.midiNote)*100f+livePitch!!.cents else null
      Column(Modifier.fillMaxSize(),verticalArrangement=Arrangement.spacedBy(if(compact)4.dp else 8.dp)){
       Row(Modifier.fillMaxWidth().height(if(compact)30.dp else 38.dp),verticalAlignment=Alignment.CenterVertically){
@@ -605,7 +615,7 @@ class MainActivity:ComponentActivity(){
        Text(currentLyric,fontSize=if(compact)17.sp else 24.sp,fontWeight=FontWeight.ExtraBold,color=Color.White,maxLines=1)
        if(nextLyric.isNotBlank())Text(nextLyric,color=muted,fontSize=if(compact)11.sp else 15.sp,maxLines=1)
       }
-      MelodyPitchChart(displayReferenceNotes,pitchTrace,currentPositionMs,Modifier.fillMaxWidth())
+      MelodyPitchChart(displayReferenceNotes,pitchTrace,analysisPositionMs,Modifier.fillMaxWidth())
       Row(Modifier.weight(1f).fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){
        Panel(Modifier.weight(1f).fillMaxHeight()){
         Text("NOTAS OBJETIVO",color=cyan,fontWeight=FontWeight.Bold,fontSize=if(compact)10.sp else 12.sp)
@@ -624,7 +634,8 @@ class MainActivity:ComponentActivity(){
         Spacer(Modifier.weight(1f))
         VocalPitchCapture(onPitch={pitch->
          livePitch=pitch
-         val position=player.currentPosition
+         val position=compensatePitchFrameTime(player.currentPosition,micFrameCenterOffsetMs)
+         analysisPositionMs=position
          if(player.isPlaying && referenceNotes.isNotEmpty()){
           val target=scorer.targetAt(position)
           scoreSnapshot=scorer.observe(position,pitch)
@@ -638,7 +649,8 @@ class MainActivity:ComponentActivity(){
            pitchTrace=(pitchTrace+PitchTracePoint(position,Float.NaN,false,breakBefore=true)).takeLast(240)
           }
          }
-        },autoStart=micPermissionGranted,onPermissionGranted={micPermissionGranted=true},modifier=Modifier.fillMaxWidth())
+        },autoStart=micPermissionGranted,onPermissionGranted={micPermissionGranted=true},
+         onFrameCenterOffsetMs={micFrameCenterOffsetMs=it},modifier=Modifier.fillMaxWidth())
        }
       }
       if(!compact)Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
