@@ -178,6 +178,7 @@ class MainActivity:ComponentActivity(){
  var livePitch by remember { mutableStateOf<PitchAnalyzer.Pitch?>(null) }
  var selectedAudioUri by remember { mutableStateOf(prefs.getString("selected_audio_uri", null)) }
  var micPermissionGranted by remember { mutableStateOf(context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) }
+ var micPermissionMessage by remember { mutableStateOf("") }
  var lyricLines by remember { mutableStateOf(emptyList<LyricLine>()) }
  var currentPositionMs by remember { mutableLongStateOf(0L) }
  var playerPlaying by remember { mutableStateOf(false) }
@@ -438,12 +439,22 @@ class MainActivity:ComponentActivity(){
  }
  val micPermissionLauncher=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()){granted->
   micPermissionGranted=granted
-  beginSession()
+  if(granted){
+   micPermissionMessage=""
+   beginSession()
+  } else {
+   micPermissionMessage="Para evaluar tu afinación, Cantar necesita permiso de micrófono. Podés habilitarlo en los permisos de la aplicación."
+  }
  }
  fun startSession(){
   micPermissionGranted=context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED
-  if(micPermissionGranted) beginSession()
-  else micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+  if(micPermissionGranted){
+   micPermissionMessage=""
+   beginSession()
+  } else {
+   micPermissionMessage=""
+   micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+  }
  }
  fun saveProfile(){
   prefs.edit().putString("profile_name",profileName.trim()).putString("opponent_name",opponent.trim())
@@ -573,6 +584,7 @@ class MainActivity:ComponentActivity(){
      Text(if(shift==0)"Tono original no verificado" else "Transposición ${if(shift>0)"+" else ""}$shift semitonos",fontSize=20.sp,color=green,fontWeight=FontWeight.Bold)
      Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){listOf(-2,-1,0,1,2).forEach{n->OutlinedButton({shift=if(n==0)0 else (shift+n).coerceIn(-12,12)}){Text(if(n==0)"Normal" else if(n<0)"Más bajo\n($n)" else "Más alto\n(+$n)")}}}
      Text("Ajuste de −12 a +12 semitonos",color=muted,fontSize=12.sp)
+     if(micPermissionMessage.isNotBlank())Text(micPermissionMessage,color=gold,fontSize=11.sp)
      Spacer(Modifier.height(16.dp));HomeButton("▶  Comenzar a cantar",green){startSession()}
     }
     Page.SING->BoxWithConstraints(Modifier.fillMaxSize().padding(8.dp)){
