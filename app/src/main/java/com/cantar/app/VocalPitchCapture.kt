@@ -31,6 +31,7 @@ fun VocalPitchCapture(
     onPitch: (PitchAnalyzer.Pitch?) -> Unit,
     autoStart: Boolean = false,
     onPermissionGranted: () -> Unit = {},
+    onFrameCenterOffsetMs: (Long) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -147,7 +148,11 @@ fun VocalPitchCapture(
                 val frame = ShortArray(4_096)
                 var frameCount = 0
                 var readFailed = false
+                val frameCenterOffsetMs = (frame.size / 2L * 1_000L) / activeRate
 
+                withContext(Dispatchers.Main) {
+                    onFrameCenterOffsetMs(frameCenterOffsetMs)
+                }
                 audioRecord.startRecording()
                 while (isActive) {
                     val count = audioRecord.read(
