@@ -175,6 +175,19 @@ class PitchAnalyzerTest {
     }
 
     @Test
+    fun detectsMidVoiceAt22050SampleRateFallback() {
+        val sampleRate = 22_050
+        val samples = ShortArray(4_096) { index ->
+            (sin(2.0 * PI * 220.0 * index / sampleRate) * 12_000.0).toInt().toShort()
+        }
+
+        val pitch = PitchAnalyzer.analyze(samples, sampleRate)
+
+        assertNotNull(pitch)
+        assertEquals(220f, pitch!!.frequencyHz, 3.0f)
+    }
+
+    @Test
     fun detectsHighSopranoAt1175Hz() {
         val sampleRate = 44_100
         val samples = ShortArray(4_096) { index ->
