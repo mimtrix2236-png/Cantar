@@ -77,6 +77,7 @@ GitHub Actions ejecuta `:app:testDebugUnitTest` y `:app:assembleDebug` en cada p
 - La melodía de referencia se debe proporcionar en CSV; no se infiere automáticamente desde el audio ni desde la letra.
 - YIN estima una frecuencia fundamental monofónica; voces superpuestas, acompañamiento fuerte, reverberación y micrófonos distintos pueden afectar la precisión.
 - La puntuación debe validarse con canciones y dispositivos reales antes de considerarse definitiva.
+- La compensación temporal actual corrige el centro de la ventana PCM; la latencia física del micrófono, del altavoz y de la ruta inalámbrica puede variar por dispositivo y todavía requiere calibración en teléfonos y Smart TV reales.
 - Los perfiles y resultados son locales al dispositivo; no hay cuentas en la nube ni duelo online.
 
 ## Privacidad
