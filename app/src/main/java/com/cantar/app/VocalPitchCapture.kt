@@ -86,6 +86,7 @@ fun VocalPitchCapture(
                     }
                     if (unprocessedSupported) add(MediaRecorder.AudioSource.UNPROCESSED)
                     add(MediaRecorder.AudioSource.VOICE_RECOGNITION)
+                    add(MediaRecorder.AudioSource.MIC)
                 }.distinct()
 
                 // Try both source and sample-rate combinations. Some Android devices expose
@@ -107,6 +108,8 @@ fun VocalPitchCapture(
                                 maxOf(minimum * 2, 16_384)
                             )
                         } catch (_: IllegalArgumentException) {
+                            null
+                        } catch (_: IllegalStateException) {
                             null
                         } ?: continue
                         if (candidate.state == AudioRecord.STATE_INITIALIZED) {
@@ -132,6 +135,7 @@ fun VocalPitchCapture(
                 val sourceLabel = when (activeSource) {
                     MediaRecorder.AudioSource.VOICE_PERFORMANCE -> "Entrada de baja latencia para karaoke"
                     MediaRecorder.AudioSource.UNPROCESSED -> "Entrada de micrófono sin procesar"
+                    MediaRecorder.AudioSource.MIC -> "Entrada de micrófono estándar"
                     else -> "Entrada optimizada para reconocimiento de voz"
                 }
                 val effectsLabel = when {
