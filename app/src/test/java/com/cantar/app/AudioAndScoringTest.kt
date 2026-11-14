@@ -319,4 +319,11 @@ class PitchTraceContinuityTest {
 
         org.junit.Assert.assertFalse(canConnectPitchTrace(previous, next))
     }
+
+    @Test
+    fun compensatesPitchFrameCenterWithoutNegativeTimeline() {
+        assertEquals(954L, compensatePitchFrameTime(1_000L, 46L))
+        assertEquals(0L, compensatePitchFrameTime(20L, 46L))
+        assertEquals(1_000L, compensatePitchFrameTime(1_000L, -10L))
+    }
 }
