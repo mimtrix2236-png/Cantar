@@ -51,8 +51,8 @@ object PitchAnalyzer {
         val dc = (mean / size).toFloat()
         for (i in signal.indices) signal[i] -= dc
 
-        val minFrequency = 65f
-        val maxFrequency = 1_000f
+        val minFrequency = 55f
+        val maxFrequency = 1_200f
         val minTau = (effectiveRate / maxFrequency).toInt().coerceAtLeast(2)
         val maxTau = (effectiveRate / minFrequency).toInt().coerceAtMost(size / 2)
         if (maxTau <= minTau) return null
@@ -60,11 +60,14 @@ object PitchAnalyzer {
         // YIN difference function and cumulative mean normalized difference.
         val difference = FloatArray(maxTau + 1)
         val normalized = FloatArray(maxTau + 1)
+        // Keep the comparison window identical for every lag. Using size - tau
+        // would shorten the window as tau grows and bias the YIN difference curve
+        // toward longer periods (especially for low bass notes).
+        val windowSize = size - maxTau
         for (tau in 1..maxTau) {
             var sum = 0.0
-            val limit = size - tau
             var i = 0
-            while (i < limit) {
+            while (i < windowSize) {
                 val delta = signal[i] - signal[i + tau]
                 sum += delta * delta
                 i++
