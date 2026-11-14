@@ -9,6 +9,7 @@ import android.media.audiofx.AudioEffect
 import android.media.audiofx.AcousticEchoCanceler
 import android.media.audiofx.NoiseSuppressor
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -47,7 +48,14 @@ fun VocalPitchCapture(
     }
 
     LaunchedEffect(autoStart) {
-        if (autoStart) recording = true
+        if (autoStart) {
+            val granted = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+            permissionDenied = !granted
+            if (granted) recording = true
+        }
     }
 
     LaunchedEffect(recording) {
@@ -58,39 +66,57 @@ fun VocalPitchCapture(
         }
 
         val completed = withContext(Dispatchers.IO) {
-            val sampleRates = intArrayOf(44_100, 48_000, 22_050)
+            val sampleRates = intArrayOf(48_000, 44_100, 22_050)
             var recorder: AudioRecord? = null
             var activeRate = 0
+            var activeSource = MediaRecorder.AudioSource.VOICE_RECOGNITION
             var echoCanceler: AcousticEchoCanceler? = null
             var noiseSuppressor: NoiseSuppressor? = null
 
             try {
-                for (rate in sampleRates) {
-                    val minimum = AudioRecord.getMinBufferSize(
-                        rate,
-                        AudioFormat.CHANNEL_IN_MONO,
-                        AudioFormat.ENCODING_PCM_16BIT
-                    )
-                    if (minimum <= 0) continue
-                    val audioManager = context.getSystemService(AudioManager::class.java)
-                    val inputSource = if (audioManager?.getProperty(AudioManager.PROPERTY_SUPPORT_AUDIO_SOURCE_UNPROCESSED) == "true") {
-                        MediaRecorder.AudioSource.UNPROCESSED
-                    } else {
-                        MediaRecorder.AudioSource.VOICE_RECOGNITION
+                val audioManager = context.getSystemService(AudioManager::class.java)
+                val unprocessedSupported =
+                    audioManager?.getProperty(AudioManager.PROPERTY_SUPPORT_AUDIO_SOURCE_UNPROCESSED) == "true"
+                val sourceCandidates = buildList {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        // Android documents this source specifically for low-latency live performance,
+                        // including karaoke, with reduced coupling to the playback path.
+                        add(MediaRecorder.AudioSource.VOICE_PERFORMANCE)
                     }
-                    val candidate = AudioRecord(
-                        inputSource,
-                        rate,
-                        AudioFormat.CHANNEL_IN_MONO,
-                        AudioFormat.ENCODING_PCM_16BIT,
-                        maxOf(minimum * 2, 16_384)
-                    )
-                    if (candidate.state == AudioRecord.STATE_INITIALIZED) {
-                        recorder = candidate
-                        activeRate = rate
-                        break
+                    if (unprocessedSupported) add(MediaRecorder.AudioSource.UNPROCESSED)
+                    add(MediaRecorder.AudioSource.VOICE_RECOGNITION)
+                }.distinct()
+
+                // Try both source and sample-rate combinations. Some Android devices expose
+                // VOICE_PERFORMANCE but do not support every requested input rate.
+                for (source in sourceCandidates) {
+                    for (rate in sampleRates) {
+                        val minimum = AudioRecord.getMinBufferSize(
+                            rate,
+                            AudioFormat.CHANNEL_IN_MONO,
+                            AudioFormat.ENCODING_PCM_16BIT
+                        )
+                        if (minimum <= 0) continue
+                        val candidate = try {
+                            AudioRecord(
+                                source,
+                                rate,
+                                AudioFormat.CHANNEL_IN_MONO,
+                                AudioFormat.ENCODING_PCM_16BIT,
+                                maxOf(minimum * 2, 16_384)
+                            )
+                        } catch (_: IllegalArgumentException) {
+                            null
+                        } ?: continue
+                        if (candidate.state == AudioRecord.STATE_INITIALIZED) {
+                            recorder = candidate
+                            activeRate = candidate.sampleRate.takeIf { it > 0 } ?: rate
+                            activeSource = source
+                            break
+                        }
+                        candidate.release()
                     }
-                    candidate.release()
+                    if (recorder != null) break
                 }
 
                 val audioRecord = recorder ?: return@withContext false
@@ -102,13 +128,19 @@ fun VocalPitchCapture(
                 }.getOrNull()
                 val echoEnabled = runCatching { echoCanceler?.setEnabled(true) == AudioEffect.SUCCESS }.getOrDefault(false)
                 val noiseEnabled = runCatching { noiseSuppressor?.setEnabled(true) == AudioEffect.SUCCESS }.getOrDefault(false)
+                val sourceLabel = when (activeSource) {
+                    MediaRecorder.AudioSource.VOICE_PERFORMANCE -> "Entrada de baja latencia para karaoke"
+                    MediaRecorder.AudioSource.UNPROCESSED -> "Entrada de micrófono sin procesar"
+                    else -> "Entrada optimizada para reconocimiento de voz"
+                }
+                val effectsLabel = when {
+                    echoEnabled && noiseEnabled -> "cancelación de eco y ruido activadas"
+                    echoEnabled -> "cancelación de eco activa"
+                    noiseEnabled -> "reducción de ruido activa"
+                    else -> "sin filtros de eco/ruido compatibles; se recomiendan auriculares"
+                }
                 withContext(Dispatchers.Main) {
-                    effectsMessage = when {
-                        echoEnabled && noiseEnabled -> "Cancelación de eco y ruido activadas por el dispositivo."
-                        echoEnabled -> "Cancelación de eco activa; reducción de ruido no disponible."
-                        noiseEnabled -> "Reducción de ruido activa; cancelación de eco no disponible."
-                        else -> "El teléfono no ofrece filtros compatibles. Para evitar que la música se cuele en el micrófono, usá auriculares."
-                    }
+                    effectsMessage = "$sourceLabel · $effectsLabel · ${activeRate} Hz."
                 }
 
                 val readBuffer = ShortArray(2_048)
