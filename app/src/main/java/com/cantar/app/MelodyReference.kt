@@ -31,6 +31,13 @@ fun canConnectPitchTrace(
         next.midiValue.isFinite() &&
         (next.timeMs - previous.timeMs) in 1L..maxGapMs
 
+/**
+ * Aligns a pitch estimate to the center of its captured PCM frame rather than
+ * the moment the final samples were delivered by AudioRecord.
+ */
+fun compensatePitchFrameTime(playbackPositionMs: Long, frameCenterOffsetMs: Long): Long =
+    (playbackPositionMs - frameCenterOffsetMs.coerceAtLeast(0L)).coerceAtLeast(0L)
+
 data class NoteScore(
     val noteIndex: Int,
     val points: Int,
