@@ -130,7 +130,7 @@ class MelodyScorer(
     private val scores = mutableListOf<NoteScore>()
     private val finalized = BooleanArray(notes.size)
     private var nextToFinalize = 0
-    private var lastSampleAtMs = Long.MIN_VALUE
+    private val lastSampleAtMs = LongArray(notes.size) { Long.MIN_VALUE }
 
     fun targetAt(positionMs: Long): ReferenceNote? {
         var low = 0
@@ -146,13 +146,16 @@ class MelodyScorer(
     fun observe(positionMs: Long, pitch: PitchAnalyzer.Pitch?): ScoringSnapshot {
         finalizeExpired(positionMs)
         val target = targetAt(positionMs)
-        if (target != null && pitch != null && pitch.confidence >= 0.68f &&
-            (lastSampleAtMs == Long.MIN_VALUE || positionMs - lastSampleAtMs >= 65L)
-        ) {
+        if (target != null && pitch != null && pitch.confidence >= 0.68f) {
             val index = notes.binarySearchBy(target.startMs) { it.startMs }.coerceAtLeast(0)
-            val error = (pitch.midiNote - target.midiNote) * 100f + pitch.cents
-            samples[index].add(error)
-            lastSampleAtMs = positionMs
+            // Throttle independently per note. A global throttle could discard the
+            // first valid sample of a short note immediately after another note.
+            val previousSampleAtMs = lastSampleAtMs[index]
+            if (previousSampleAtMs == Long.MIN_VALUE || positionMs - previousSampleAtMs >= 65L) {
+                val error = (pitch.midiNote - target.midiNote) * 100f + pitch.cents
+                samples[index].add(error)
+                lastSampleAtMs[index] = positionMs
+            }
         }
         return snapshot()
     }
