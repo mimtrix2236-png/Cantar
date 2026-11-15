@@ -278,6 +278,22 @@ class MelodyReferenceTest {
     }
 
     @Test
+    fun scoresFirstSampleOfShortAdjacentNoteIndependently() {
+        val notes = MelodyReferenceParser.parseCsv(
+            "start_ms,duration_ms,midi_note\\n0,40,69\\n40,40,71"
+        )
+        val scorer = MelodyScorer(notes)
+        scorer.observe(15, PitchAnalyzer.Pitch(440f, 69, "La 4", 0, 0.99f))
+        scorer.observe(55, PitchAnalyzer.Pitch(493.88f, 71, "Si 4", 0, 0.99f))
+
+        val result = scorer.finish()
+
+        assertEquals(1_000, result.totalPoints)
+        assertEquals(2, result.detectedNotes)
+        assertEquals(2, result.correctNotes)
+    }
+
+    @Test
     fun doesNotAwardPointsWhenNoVoiceWasDetected() {
         val notes = MelodyReferenceParser.parseCsv("start_ms,duration_ms,midi_note\n0,300,69")
         val scorer = MelodyScorer(notes)
@@ -323,6 +339,15 @@ class PitchTraceContinuityTest {
         val next = PitchTracePoint(400L, 69.1f, true)
 
         org.junit.Assert.assertFalse(canConnectPitchTrace(previous, next))
+    }
+
+    @Test
+    fun hidesLivePitchMarkerAfterUnvoicedFrame() {
+        val voiced = PitchTracePoint(100L, 69.0f, true)
+        val silence = PitchTracePoint(145L, Float.NaN, false, breakBefore = true)
+
+        org.junit.Assert.assertEquals(voiced, latestVoicedTracePoint(listOf(voiced)))
+        org.junit.Assert.assertNull(latestVoicedTracePoint(listOf(voiced, silence)))
     }
 
     @Test
