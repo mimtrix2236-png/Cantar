@@ -96,7 +96,7 @@ fun MelodyPitchChart(
                     )
                 }
             }
-            voicedTrace.lastOrNull()?.let { point ->
+            latestVoicedTracePoint(visibleTrace)?.let { point ->
                 drawCircle(
                     color = if (point.inTune) Color(0xFF24F276) else Color(0xFFFFA52E),
                     radius = 5.dp.toPx(),
