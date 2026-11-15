@@ -280,7 +280,7 @@ class MelodyReferenceTest {
     @Test
     fun scoresFirstSampleOfShortAdjacentNoteIndependently() {
         val notes = MelodyReferenceParser.parseCsv(
-            "start_ms,duration_ms,midi_note\\n0,40,69\\n40,40,71"
+            "start_ms,duration_ms,midi_note\n0,40,69\n40,40,71"
         )
         val scorer = MelodyScorer(notes)
         scorer.observe(15, PitchAnalyzer.Pitch(440f, 69, "La 4", 0, 0.99f))
