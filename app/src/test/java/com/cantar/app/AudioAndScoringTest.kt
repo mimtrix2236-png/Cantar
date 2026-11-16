@@ -1,5 +1,6 @@
 package com.cantar.app
 
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -110,6 +111,37 @@ class AudioPitchShiftTest {
 }
 
 class PitchAnalyzerTest {
+    @Test
+    fun rejectsConstantDcOffsetWithoutVoice() {
+        assertNull(PitchAnalyzer.analyze(ShortArray(4_096) { 6_000 }, 44_100))
+    }
+
+    @Test
+    fun detectsQuietToneDespiteLargeDcBias() {
+        val sampleRate = 44_100
+        val samples = ShortArray(4_096) { index ->
+            (6_000.0 + 900.0 * sin(2.0 * PI * 440.0 * index / sampleRate)).toInt().toShort()
+        }
+
+        val pitch = PitchAnalyzer.analyze(samples, sampleRate)
+
+        assertNotNull(pitch)
+        assertEquals(440f, pitch!!.frequencyHz, 3.0f)
+    }
+
+    @Test
+    fun doesNotMutateTheReusableCaptureFrame() {
+        val sampleRate = 44_100
+        val samples = ShortArray(4_096) { index ->
+            (sin(2.0 * PI * 440.0 * index / sampleRate) * 8_000.0).toInt().toShort()
+        }
+        val original = samples.copyOf()
+
+        PitchAnalyzer.analyze(samples, sampleRate)
+
+        assertArrayEquals(original, samples)
+    }
+
     @Test
     fun detects440HzTone() {
         val sampleRate = 44_100
