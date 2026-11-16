@@ -33,7 +33,6 @@ object PitchAnalyzer {
 
         val signal = FloatArray(size)
         var mean = 0.0
-        var energy = 0.0
         for (i in 0 until size) {
             val centerIndex = i * decimation
             val left = samples[(centerIndex - 1).coerceAtLeast(0)].toFloat()
@@ -43,13 +42,19 @@ object PitchAnalyzer {
             val value = (left * 0.25f + center * 0.5f + right * 0.25f) / 32768f
             signal[i] = value
             mean += value
-            energy += value * value
         }
-        val rms = sqrt(energy / size).toFloat()
-        if (rms < 0.010f) return null
 
+        // Measure AC energy after removing the DC component. A microphone input
+        // with a large DC bias must not pass the voice gate when it contains
+        // almost no actual vocal signal.
         val dc = (mean / size).toFloat()
-        for (i in signal.indices) signal[i] -= dc
+        var centeredEnergy = 0.0
+        for (i in signal.indices) {
+            signal[i] -= dc
+            centeredEnergy += signal[i] * signal[i]
+        }
+        val rms = sqrt(centeredEnergy / size).toFloat()
+        if (rms < 0.010f) return null
 
         val minFrequency = 55f
         val maxFrequency = 1_200f
@@ -58,12 +63,13 @@ object PitchAnalyzer {
         if (maxTau <= minTau) return null
 
         // YIN difference function and cumulative mean normalized difference.
-        val difference = FloatArray(maxTau + 1)
         val normalized = FloatArray(maxTau + 1)
         // Keep the comparison window identical for every lag. Using size - tau
         // would shorten the window as tau grows and bias the YIN difference curve
-        // toward longer periods (especially for low bass notes).
+        // toward longer periods (especially for low bass notes). Calculate each
+        // lag in place to avoid allocating a second array on every audio frame.
         val windowSize = size - maxTau
+        var runningSum = 0.0
         for (tau in 1..maxTau) {
             var sum = 0.0
             var i = 0
@@ -72,14 +78,10 @@ object PitchAnalyzer {
                 sum += delta * delta
                 i++
             }
-            difference[tau] = sum.toFloat()
-        }
-
-        var runningSum = 0.0
-        for (tau in 1..maxTau) {
-            runningSum += difference[tau]
+            val currentDifference = sum.toFloat()
+            runningSum += currentDifference
             normalized[tau] = if (runningSum > 1e-12) {
-                (difference[tau] * tau / runningSum).toFloat()
+                (currentDifference * tau / runningSum).toFloat()
             } else {
                 1f
             }
