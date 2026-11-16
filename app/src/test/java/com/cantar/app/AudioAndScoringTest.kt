@@ -396,4 +396,36 @@ class PitchTraceContinuityTest {
         assertEquals(0L, compensatePitchFrameTime(20L, 46L))
         assertEquals(1_000L, compensatePitchFrameTime(1_000L, -10L))
     }
+
+    @Test
+    fun alignsPitchFrameUsingMonotonicCaptureTimestamp() {
+        assertEquals(
+            954L,
+            alignPlaybackPositionToCaptureTime(
+                playbackPositionAtCallbackMs = 1_000L,
+                callbackTimeNanos = 1_000_000_000L,
+                captureCenterTimeNanos = 954_000_000L
+            )
+        )
+        assertEquals(
+            0L,
+            alignPlaybackPositionToCaptureTime(
+                playbackPositionAtCallbackMs = 20L,
+                callbackTimeNanos = 1_000_000_000L,
+                captureCenterTimeNanos = 954_000_000L
+            )
+        )
+    }
+
+    @Test
+    fun doesNotSubtractTimeWhenCaptureTimestampIsInFuture() {
+        assertEquals(
+            1_000L,
+            alignPlaybackPositionToCaptureTime(
+                playbackPositionAtCallbackMs = 1_000L,
+                callbackTimeNanos = 1_000_000_000L,
+                captureCenterTimeNanos = 1_100_000_000L
+            )
+        )
+    }
 }
