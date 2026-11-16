@@ -172,7 +172,9 @@ fun VocalPitchCapture(
                             frameCount += copied
 
                             if (frameCount == frame.size) {
-                                val pitch = PitchAnalyzer.analyze(frame.copyOf(), activeRate)
+                                // PitchAnalyzer is read-only, so reuse the capture buffer.
+                                // Avoiding a per-frame copy reduces allocation and GC pressure.
+                                val pitch = PitchAnalyzer.analyze(frame, activeRate)
                                 withContext(Dispatchers.Main) { onPitch(pitch) }
                                 // 50% overlap gives a smoother pitch trace without excessive CPU use.
                                 frame.copyInto(frame, 0, frame.size / 2, frame.size)
