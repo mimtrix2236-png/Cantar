@@ -3,6 +3,7 @@ package com.cantar.app
 import android.Manifest
 import android.media.AudioFormat
 import android.media.AudioRecord
+import android.media.AudioTimestamp
 import android.media.MediaRecorder
 import android.media.AudioManager
 import android.media.audiofx.AudioEffect
@@ -28,7 +29,7 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun VocalPitchCapture(
-    onPitch: (PitchAnalyzer.Pitch?) -> Unit,
+    onPitch: (PitchAnalyzer.Pitch?, captureCenterTimeNanos: Long?) -> Unit,
     autoStart: Boolean = false,
     onPermissionGranted: () -> Unit = {},
     onFrameCenterOffsetMs: (Long) -> Unit = {},
@@ -62,7 +63,7 @@ fun VocalPitchCapture(
     LaunchedEffect(recording) {
         if (!recording) {
             effectsMessage = "Los filtros de audio se activan solo durante la captura."
-            onPitch(null)
+            onPitch(null, null)
             return@LaunchedEffect
         }
 
@@ -151,7 +152,9 @@ fun VocalPitchCapture(
                 val readBuffer = ShortArray(2_048)
                 val frame = ShortArray(4_096)
                 var frameCount = 0
+                var totalFramesRead = 0L
                 var readFailed = false
+                val audioTimestamp = AudioTimestamp()
                 val frameCenterOffsetMs = (frame.size / 2L * 1_000L) / activeRate
 
                 withContext(Dispatchers.Main) {
@@ -167,6 +170,7 @@ fun VocalPitchCapture(
                     )
                     when {
                         count > 0 -> {
+                            totalFramesRead += count
                             val copied = minOf(count, frame.size - frameCount)
                             readBuffer.copyInto(frame, frameCount, 0, copied)
                             frameCount += copied
@@ -175,7 +179,23 @@ fun VocalPitchCapture(
                                 // PitchAnalyzer is read-only, so reuse the capture buffer.
                                 // Avoiding a per-frame copy reduces allocation and GC pressure.
                                 val pitch = PitchAnalyzer.analyze(frame, activeRate)
-                                withContext(Dispatchers.Main) { onPitch(pitch) }
+                                // AudioRecord's monotonic timestamp lets the UI map this
+                                // frame center to the playback clock, including read/dispatch delay.
+                                val centerFramePosition = (totalFramesRead - frame.size / 2L).coerceAtLeast(0L)
+                                val captureCenterTimeNanos = runCatching {
+                                    val status = audioRecord.getTimestamp(
+                                        audioTimestamp,
+                                        AudioTimestamp.TIMEBASE_MONOTONIC
+                                    )
+                                    if (status == AudioRecord.SUCCESS) {
+                                        val framesBehind = audioTimestamp.framePosition - centerFramePosition
+                                        if (framesBehind in 0L..(activeRate * 2L)) {
+                                            audioTimestamp.nanoTime -
+                                                framesBehind * 1_000_000_000L / activeRate
+                                        } else null
+                                    } else null
+                                }.getOrNull()
+                                withContext(Dispatchers.Main) { onPitch(pitch, captureCenterTimeNanos) }
                                 // 50% overlap gives a smoother pitch trace without excessive CPU use.
                                 frame.copyInto(frame, 0, frame.size / 2, frame.size)
                                 frameCount = frame.size / 2
