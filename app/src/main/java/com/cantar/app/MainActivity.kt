@@ -632,9 +632,13 @@ class MainActivity:ComponentActivity(){
         Text(livePitch?.let{"${it.noteName} · ${it.frequencyHz.toInt()} Hz"}?:"Esperando voz",fontSize=if(compact)16.sp else 21.sp,fontWeight=FontWeight.ExtraBold,color=targetError?.let{if(kotlin.math.abs(it)<=50f)green else gold}?:muted)
         Text(targetError?.let{"${it.toInt()} cents respecto al objetivo"}?:"",color=muted,fontSize=10.sp)
         Spacer(Modifier.weight(1f))
-        VocalPitchCapture(onPitch={pitch->
+        VocalPitchCapture(onPitch={pitch,captureCenterTimeNanos->
          livePitch=pitch
-         val position=compensatePitchFrameTime(player.currentPosition,micFrameCenterOffsetMs)
+         val playbackPositionAtCallback=player.currentPosition
+         val callbackTimeNanos=System.nanoTime()
+         val position=captureCenterTimeNanos?.let {
+          alignPlaybackPositionToCaptureTime(playbackPositionAtCallback,callbackTimeNanos,it)
+         } ?: compensatePitchFrameTime(playbackPositionAtCallback,micFrameCenterOffsetMs)
          analysisPositionMs=position
          if(player.isPlaying && referenceNotes.isNotEmpty()){
           val target=scorer.targetAt(position)
