@@ -42,6 +42,20 @@ fun latestVoicedTracePoint(trace: List<PitchTracePoint>): PitchTracePoint? =
 fun compensatePitchFrameTime(playbackPositionMs: Long, frameCenterOffsetMs: Long): Long =
     (playbackPositionMs - frameCenterOffsetMs.coerceAtLeast(0L)).coerceAtLeast(0L)
 
+/**
+ * Maps a captured PCM frame center onto the media timeline using monotonic
+ * timestamps. AudioTimestamp.TIMEBASE_MONOTONIC shares System.nanoTime's clock.
+ */
+fun alignPlaybackPositionToCaptureTime(
+    playbackPositionAtCallbackMs: Long,
+    callbackTimeNanos: Long,
+    captureCenterTimeNanos: Long
+): Long {
+    val elapsedNanos = (callbackTimeNanos - captureCenterTimeNanos).coerceAtLeast(0L)
+    val elapsedMs = elapsedNanos / 1_000_000L
+    return (playbackPositionAtCallbackMs - elapsedMs).coerceAtLeast(0L)
+}
+
 data class NoteScore(
     val noteIndex: Int,
     val points: Int,
