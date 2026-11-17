@@ -429,3 +429,23 @@ class PitchTraceContinuityTest {
         )
     }
 }
+
+class PlaybackEndPolicyTest {
+    @Test
+    fun autoFinalizesOnlyAnEndedActiveKaraokeRound() {
+        org.junit.Assert.assertTrue(
+            shouldAutoFinalizePlayback(
+                isSinging = true,
+                playbackEnded = true,
+                roundFinalizing = false
+            )
+        )
+    }
+
+    @Test
+    fun doesNotFinalizeSetupOrAlreadyFinalizedRounds() {
+        org.junit.Assert.assertFalse(shouldAutoFinalizePlayback(false, true, false))
+        org.junit.Assert.assertFalse(shouldAutoFinalizePlayback(true, false, false))
+        org.junit.Assert.assertFalse(shouldAutoFinalizePlayback(true, true, true))
+    }
+}
