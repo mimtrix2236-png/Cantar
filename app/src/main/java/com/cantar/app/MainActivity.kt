@@ -185,6 +185,8 @@ class MainActivity:ComponentActivity(){
  var micFrameCenterOffsetMs by remember { mutableLongStateOf(0L) }
  var playerPlaying by remember { mutableStateOf(false) }
  var playerError by remember { mutableStateOf("") }
+ var playbackEnded by remember { mutableStateOf(false) }
+ var roundFinalizing by remember { mutableStateOf(false) }
  val player = remember(context) {
   ExoPlayer.Builder(context)
    .setAudioAttributes(
@@ -200,7 +202,9 @@ class MainActivity:ComponentActivity(){
  DisposableEffect(player) {
   val listener=object:Player.Listener {
    override fun onIsPlayingChanged(isPlaying:Boolean){playerPlaying=isPlaying}
-   override fun onPlaybackStateChanged(playbackState:Int){if(playbackState==Player.STATE_ENDED)playerPlaying=false}
+   override fun onPlaybackStateChanged(playbackState:Int){
+    if(playbackState==Player.STATE_ENDED){playerPlaying=false;playbackEnded=true}
+   }
    override fun onPlayerError(error:PlaybackException){playerError=error.errorCodeName;playerPlaying=false}
   }
   player.addListener(listener)
@@ -208,6 +212,7 @@ class MainActivity:ComponentActivity(){
  }
  LaunchedEffect(selectedAudioUri) {
   playerError=""
+  playbackEnded=false
   player.stop()
   selectedAudioUri?.let { player.setMediaItem(MediaItem.fromUri(it)); player.prepare() }
  }
@@ -366,6 +371,8 @@ class MainActivity:ComponentActivity(){
   page=Page.SETUP
  }
  fun finishRound(){
+  if(page!=Page.SING || roundFinalizing) return
+  roundFinalizing=true
   val canScore=selectedAudioUri!=null && referenceNotes.isNotEmpty() && playbackStarted && player.currentPosition>0L
   scoreSnapshot=if(canScore) scorer.finish() else ScoringSnapshot(totalNotes=referenceNotes.size)
   points=if(canScore) scoreSnapshot.totalPoints else 0
@@ -375,6 +382,8 @@ class MainActivity:ComponentActivity(){
    firstDuelScore=points
    firstDuelSnapshot=scoreSnapshot
    duelRound=2
+   playbackEnded=false
+   roundFinalizing=false
    points=0
    scoreSnapshot=ScoringSnapshot(totalNotes=referenceNotes.size)
    livePitch=null
@@ -426,6 +435,8 @@ class MainActivity:ComponentActivity(){
   prefs.edit().putString("reference_csv",csv).putString("reference_song_key","${selected.artist}|${selected.title}").apply()
  }
  fun beginSession(){
+  roundFinalizing=false
+  playbackEnded=false
   points=0
   duelRound=1
   firstDuelScore=0
@@ -455,6 +466,9 @@ class MainActivity:ComponentActivity(){
   } else {
    micPermissionMessage="Para evaluar tu afinación, Cantar necesita permiso de micrófono. Podés habilitarlo en los permisos de la aplicación."
   }
+ }
+ LaunchedEffect(playbackEnded,page,roundFinalizing){
+  if(shouldAutoFinalizePlayback(page==Page.SING,playbackEnded,roundFinalizing)) finishRound()
  }
  fun startSession(){
   micPermissionGranted=context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED
