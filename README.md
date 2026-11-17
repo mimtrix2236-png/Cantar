@@ -19,6 +19,7 @@ Aplicación Android nativa de karaoke y entrenamiento vocal, con interfaz azul o
 - Captura vocal que prioriza `VOICE_PERFORMANCE` en Android 10 o superior (fuente del sistema orientada a actuaciones en vivo/karaoke y baja latencia); usa `UNPROCESSED` cuando el dispositivo lo declara compatible y `VOICE_RECOGNITION` como alternativa. Prueba varias frecuencias de muestreo y utiliza la frecuencia efectiva informada por `AudioRecord`.
 - Gráfico de notas objetivo y trazo vocal; indicador verde dentro de ±50 cents y ámbar fuera de tolerancia. La marca temporal de cada análisis vocal se corrige al centro de la ventana PCM para reducir el desfase algorítmico de captura.
 - Puntuación final normalizada de 0 a 1.000 puntos, calculada nota por nota a partir del error mediano de afinación de las muestras detectadas.
+- Al finalizar la reproducción, Cantar cierra automáticamente la ronda y muestra los resultados; en modo Duelo reinicia la pista para el segundo participante. El botón de finalizar manual sigue disponible.
 - Historial y mejores marcas guardados localmente.
 
 ## Preparar una sesión puntuable
