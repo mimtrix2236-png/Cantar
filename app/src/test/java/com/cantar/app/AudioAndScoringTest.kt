@@ -8,6 +8,7 @@ import org.junit.Test
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.random.Random
+import java.io.ByteArrayInputStream
 
 
 class MidiReferenceParserTest {
@@ -447,5 +448,21 @@ class PlaybackEndPolicyTest {
         org.junit.Assert.assertFalse(shouldAutoFinalizePlayback(false, true, false))
         org.junit.Assert.assertFalse(shouldAutoFinalizePlayback(true, false, false))
         org.junit.Assert.assertFalse(shouldAutoFinalizePlayback(true, true, true))
+    }
+}
+
+
+class BoundedTextImportTest {
+    @Test
+    fun readsUtf8TextAtTheConfiguredByteLimit() {
+        val content = "start_ms,duration_ms,midi_note\\n0,250,69"
+        val bytes = content.toByteArray(Charsets.UTF_8)
+
+        assertEquals(content, readBoundedUtf8(ByteArrayInputStream(bytes), bytes.size))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsTextThatExceedsTheConfiguredByteLimit() {
+        readBoundedUtf8(ByteArrayInputStream(byteArrayOf(1, 2, 3, 4)), 3)
     }
 }

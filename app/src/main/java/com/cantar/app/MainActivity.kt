@@ -262,7 +262,9 @@ class MainActivity:ComponentActivity(){
  val lyricPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
   if (uri != null) try {
    context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-   lyricLines = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { parseLrc(it.readText()) } ?: emptyList()
+   lyricLines = context.contentResolver.openInputStream(uri)?.use { input ->
+    parseLrc(readBoundedUtf8(input, ImportedTextLimits.MAX_LYRICS_BYTES))
+   } ?: emptyList()
   } catch (_: Exception) { lyricLines = emptyList() }
  }
  LaunchedEffect(page, playerPlaying, micFrameCenterOffsetMs) {
@@ -275,8 +277,9 @@ class MainActivity:ComponentActivity(){
  }
  val referencePicker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->
   if(uri!=null) try {
-   val raw=context.contentResolver.openInputStream(uri)?.bufferedReader()?.use{it.readText()}
-    ?: throw IllegalArgumentException("No se pudo leer el archivo.")
+   val raw=context.contentResolver.openInputStream(uri)?.use { input ->
+    readBoundedUtf8(input, ImportedTextLimits.MAX_REFERENCE_BYTES)
+   } ?: throw IllegalArgumentException("No se pudo leer el archivo.")
    val parsed=MelodyReferenceParser.parseCsv(raw)
    referenceCsv=raw
    referenceNotes=parsed
