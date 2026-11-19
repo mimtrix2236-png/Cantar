@@ -180,6 +180,7 @@ class MainActivity:ComponentActivity(){
  var micPermissionGranted by remember { mutableStateOf(context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) }
  var micPermissionMessage by remember { mutableStateOf("") }
  var lyricLines by remember { mutableStateOf(emptyList<LyricLine>()) }
+ var showLyrics by remember { mutableStateOf(true) }
  var currentPositionMs by remember { mutableLongStateOf(0L) }
  var analysisPositionMs by remember { mutableLongStateOf(0L) }
  var micFrameCenterOffsetMs by remember { mutableLongStateOf(0L) }
@@ -361,6 +362,11 @@ class MainActivity:ComponentActivity(){
   scoreSnapshot=ScoringSnapshot()
   prefs.edit().remove("reference_csv").remove("reference_song_key").apply()
  }
+ fun openKaraokeSearch(song:Song){
+  val terms=android.net.Uri.encode(song.artist + " " + song.title + " karaoke instrumental")
+  val intent=Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://www.youtube.com/results?search_query=" + terms))
+  try { context.startActivity(intent) } catch (_:Exception) { remoteError="No se pudo abrir YouTube." }
+ }
  fun selectSong(song:Song){
   selected=song
   selectedAudioUri=null
@@ -535,7 +541,7 @@ class MainActivity:ComponentActivity(){
      val filtered=library.filter{(style=="Todos"||it.genre==style)&&(lang=="Todos"||it.lang==lang||(lang=="Otros"&&it.lang !in listOf("Español","Inglés")))&&(!showFavoritesOnly||favorites.contains("${it.artist}|${it.title}"))&&(it.title.contains(query,true)||it.artist.contains(query,true)||it.genre.contains(query,true))}
      Column(Modifier.fillMaxSize().padding(14.dp)){
       Header(if(showFavoritesOnly)"Mis favoritas" else "Seleccionar canción"){showFavoritesOnly=false;goBack()}
-      Text("Ejemplos de catálogo: no incluyen audio ni licencia musical.",color=muted,fontSize=11.sp)
+      Text("El botón de música abre una búsqueda de karaoke en YouTube; los ejemplos no incluyen audio propio.",color=muted,fontSize=11.sp)
       OutlinedTextField(query,{query=it},Modifier.fillMaxWidth(),placeholder={Text("Buscar canción...")},leadingIcon={Icon(Icons.Default.Search,null)},singleLine=true)
       Text("IDIOMA",color=cyan,fontSize=11.sp,fontWeight=FontWeight.Bold)
       Row(Modifier.horizontalScroll(rememberScrollState())){listOf("Todos","Español","Inglés","Francés","Otros").forEach{FilterChip(lang==it,{lang=it},{Text(it)})}}
@@ -560,8 +566,11 @@ class MainActivity:ComponentActivity(){
           }
          }
          val favoriteKey="${item.artist}|${item.title}"
-         IconButton(onClick={favorites=if(favorites.contains(favoriteKey))favorites-favoriteKey else favorites+favoriteKey}){
-          Icon(if(favorites.contains(favoriteKey))Icons.Default.Star else Icons.Default.StarBorder,null,tint=gold)
+         Column(horizontalAlignment=Alignment.CenterHorizontally){
+          IconButton(onClick={openKaraokeSearch(item)}){Icon(Icons.Default.LibraryMusic,null,tint=green)}
+          IconButton(onClick={favorites=if(favorites.contains(favoriteKey))favorites-favoriteKey else favorites+favoriteKey}){
+           Icon(if(favorites.contains(favoriteKey))Icons.Default.Star else Icons.Default.StarBorder,null,tint=gold)
+          }
          }
         }
        }
@@ -624,10 +633,11 @@ class MainActivity:ComponentActivity(){
      Column(Modifier.fillMaxSize(),verticalArrangement=Arrangement.spacedBy(if(compact)4.dp else 8.dp)){
       Row(Modifier.fillMaxWidth().height(if(compact)30.dp else 38.dp),verticalAlignment=Alignment.CenterVertically){
        Text("♫  ${selected.title} · ${selected.artist}",fontWeight=FontWeight.ExtraBold,fontSize=if(compact)13.sp else 17.sp,modifier=Modifier.weight(1f),maxLines=1)
+       TextButton(onClick={showLyrics=!showLyrics},contentPadding=PaddingValues(horizontal=4.dp)){Text(if(showLyrics)"Ocultar letra" else "Mostrar letra",color=cyan,fontSize=10.sp)}
        ScorePill("PUNTOS",points.toString())
        TextButton(onClick={openTvCast()},contentPadding=PaddingValues(horizontal=5.dp)){Text("▣ TV",color=cyan)}
       }
-      Panel(Modifier.fillMaxWidth().height(if(compact)if(nextLyric.isBlank())58.dp else 72.dp else 112.dp)){
+      if(showLyrics) Panel(Modifier.fillMaxWidth().height(if(compact)if(nextLyric.isBlank())58.dp else 72.dp else 112.dp)){
        Text("LETRA EN VIVO",color=cyan,fontWeight=FontWeight.Bold,fontSize=if(compact)9.sp else 11.sp)
        Text(currentLyric,fontSize=if(compact)17.sp else 24.sp,fontWeight=FontWeight.ExtraBold,color=Color.White,maxLines=1)
        if(nextLyric.isNotBlank())Text(nextLyric,color=muted,fontSize=if(compact)11.sp else 15.sp,maxLines=1)

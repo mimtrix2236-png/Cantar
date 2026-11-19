@@ -8,7 +8,8 @@ Aplicación Android nativa de karaoke y entrenamiento vocal, con interfaz azul o
 - Perfiles locales, favoritos, modo Solo y modo Duelo por turnos en un solo teléfono.
 - Biblioteca de ejemplos con filtros por idioma y géneros latinoamericanos e internacionales. Los ejemplos no incluyen grabaciones ni licencias.
 - Búsqueda de letras en LRCLIB sin API key. LRCLIB proporciona metadatos y letras; no entrega audio.
-- Búsqueda externa de pistas karaoke en YouTube. La app abre la búsqueda, pero no extrae ni reproduce el audio de YouTube.
+- Búsqueda externa de pistas karaoke en YouTube desde la configuración o desde cada canción de la biblioteca. Abre resultados de YouTube, pero no extrae ni reproduce su audio.
+- En karaoke horizontal, la letra sincronizada se muestra inicialmente y puede ocultarse para ampliar el panel de afinación.
 - Importación de archivos de audio propios mediante el selector de documentos de Android.
 - Al reemplazar el archivo de audio se limpian la referencia MIDI/CSV y la letra sincronizada anterior para evitar comparar contra datos de otra pista.
 - Reproducción local con AndroidX Media3 ExoPlayer, gestión automática del foco de audio y pausa al desconectar auriculares.
@@ -74,7 +75,7 @@ GitHub Actions ejecuta `:app:testDebugUnitTest` y `:app:assembleDebug` en cada p
 ## Alcance y limitaciones conocidas
 
 - El catálogo local es una lista de ejemplos para filtros; no representa un catálogo mundial ni una biblioteca musical licenciada.
-- LRCLIB puede no tener letra sincronizada para una canción; una letra sin tiempos no permite sincronizar el karaoke.
+- LRCLIB puede no tener letra sincronizada para una canción; una letra sin tiempos no permite sincronizar el karaoke. La letra se puede ocultar durante la práctica.
 - La melodía de referencia se debe proporcionar en CSV; no se infiere automáticamente desde el audio ni desde la letra.
 - YIN estima una frecuencia fundamental monofónica; voces superpuestas, acompañamiento fuerte, reverberación y micrófonos distintos pueden afectar la precisión.
 - La puntuación debe validarse con canciones y dispositivos reales antes de considerarse definitiva.
