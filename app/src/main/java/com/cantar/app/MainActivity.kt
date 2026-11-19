@@ -180,6 +180,7 @@ class MainActivity:ComponentActivity(){
  var micPermissionGranted by remember { mutableStateOf(context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) }
  var micPermissionMessage by remember { mutableStateOf("") }
  var lyricLines by remember { mutableStateOf(emptyList<LyricLine>()) }
+ var showLyrics by remember { mutableStateOf(false) }
  var currentPositionMs by remember { mutableLongStateOf(0L) }
  var analysisPositionMs by remember { mutableLongStateOf(0L) }
  var micFrameCenterOffsetMs by remember { mutableLongStateOf(0L) }
@@ -632,10 +633,11 @@ class MainActivity:ComponentActivity(){
      Column(Modifier.fillMaxSize(),verticalArrangement=Arrangement.spacedBy(if(compact)4.dp else 8.dp)){
       Row(Modifier.fillMaxWidth().height(if(compact)30.dp else 38.dp),verticalAlignment=Alignment.CenterVertically){
        Text("♫  ${selected.title} · ${selected.artist}",fontWeight=FontWeight.ExtraBold,fontSize=if(compact)13.sp else 17.sp,modifier=Modifier.weight(1f),maxLines=1)
+       TextButton(onClick={showLyrics=!showLyrics},contentPadding=PaddingValues(horizontal=4.dp)){Text(if(showLyrics)"Ocultar letra" else "Mostrar letra",color=cyan,fontSize=10.sp)}
        ScorePill("PUNTOS",points.toString())
        TextButton(onClick={openTvCast()},contentPadding=PaddingValues(horizontal=5.dp)){Text("▣ TV",color=cyan)}
       }
-      Panel(Modifier.fillMaxWidth().height(if(compact)if(nextLyric.isBlank())58.dp else 72.dp else 112.dp)){
+      if(showLyrics) Panel(Modifier.fillMaxWidth().height(if(compact)if(nextLyric.isBlank())58.dp else 72.dp else 112.dp)){
        Text("LETRA EN VIVO",color=cyan,fontWeight=FontWeight.Bold,fontSize=if(compact)9.sp else 11.sp)
        Text(currentLyric,fontSize=if(compact)17.sp else 24.sp,fontWeight=FontWeight.ExtraBold,color=Color.White,maxLines=1)
        if(nextLyric.isNotBlank())Text(nextLyric,color=muted,fontSize=if(compact)11.sp else 15.sp,maxLines=1)
