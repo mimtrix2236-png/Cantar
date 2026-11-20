@@ -34,7 +34,7 @@ class OverlappedPcmFrameAssemblerTest {
         val assembler = OverlappedPcmFrameAssembler(frameSize = 8, overlap = 4)
         var emitted = 0
 
-        assembler.append(ShortArray(3)) { _, _ -> emitted++ }
+        assembler.append(ShortArray(3) { it.toShort() }) { _, _ -> emitted++ }
         assembler.append(ShortArray(4) { (it + 3).toShort() }) { _, _ -> emitted++ }
         assertEquals(0, emitted)
 
