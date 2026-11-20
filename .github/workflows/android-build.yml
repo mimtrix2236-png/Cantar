@@ -30,7 +30,7 @@ jobs:
             if [[ -n "$artifact_id" ]]; then
               gh api --method DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}"
             fi
-          done < <(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" --jq '.artifacts[] | select(.name == "Cantar-debug") | .id')
+          done < <(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" --jq '.artifacts[] | select(.name == "Cantar-debug" or .name == "Cantar-karaoke-youtube-debug") | .id')
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
