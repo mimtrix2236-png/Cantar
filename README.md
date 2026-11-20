@@ -15,6 +15,7 @@ Aplicación Android nativa de karaoke y entrenamiento vocal, con interfaz azul o
 - Reproducción local con AndroidX Media3 ExoPlayer, gestión automática del foco de audio y pausa al desconectar auriculares.
 - Transposición de -12 a +12 semitonos mediante PlaybackParameters, manteniendo speed = 1.0 y modificando el factor de pitch.
 - Captura de micrófono con AudioRecord y estimación de frecuencia fundamental mediante YIN, con ventana de comparación fija y rango nominal de 55–1.200 Hz.
+- El capturador arma ventanas PCM contiguas con 50 % de solapamiento aunque AudioRecord entregue lecturas parciales; el centro temporal se calcula a partir de las muestras realmente consumidas.
 - Importación de una melodía de referencia CSV, sincronizada por milisegundos desde el inicio del archivo de audio.
 - Importación de MIDI estándar tipo 0/1 con tiempo PPQ; permite elegir la pista y convertirla a una guía monofónica usando la nota más aguda activa cuando hay acordes.
 - Captura vocal que prioriza `VOICE_PERFORMANCE` en Android 10 o superior (fuente del sistema orientada a actuaciones en vivo/karaoke y baja latencia); usa `UNPROCESSED` cuando el dispositivo lo declara compatible y `VOICE_RECOGNITION` como alternativa. Prueba varias frecuencias de muestreo y utiliza la frecuencia efectiva informada por `AudioRecord`.
@@ -70,7 +71,7 @@ Abrir el proyecto en Android Studio y ejecutar la tarea `:app:assembleDebug` des
 gradle :app:testDebugUnitTest :app:assembleDebug
 ```
 
-GitHub Actions ejecuta `:app:testDebugUnitTest` y `:app:assembleDebug` en cada push a `main`, sin publicar ni adjuntar el APK como artefacto. Las pruebas unitarias cubren señales de 55 Hz, 110 Hz con segundo armónico dominante, 220 Hz a 22,05 kHz, 440 Hz y 1.174,66 Hz, ruido no tonal, silencio, compensación temporal del centro de ventana, puntuación robusta por mediana, importación CSV/MIDI, tempo MIDI, reducción polifónica, tolerancia de afinación y transposición con velocidad 1×. La existencia de un workflow no sustituye las pruebas en un teléfono real.
+GitHub Actions ejecuta `:app:testDebugUnitTest` y `:app:assembleDebug` en cada push a `main`, sin publicar ni adjuntar el APK como artefacto. Las pruebas unitarias cubren señales de 55 Hz, 110 Hz con segundo armónico dominante, 220 Hz a 22,05 kHz, 440 Hz y 1.174,66 Hz, ruido no tonal, silencio, compensación temporal del centro de ventana, puntuación robusta por mediana, importación CSV/MIDI, tempo MIDI, reducción polifónica, tolerancia de afinación y transposición con velocidad 1×. Las pruebas también cubren el ensamblado de ventanas PCM con lecturas fragmentadas. La existencia de un workflow no sustituye las pruebas en un teléfono real.
 
 ## Alcance y limitaciones conocidas
 

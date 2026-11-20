@@ -150,12 +150,10 @@ fun VocalPitchCapture(
                 }
 
                 val readBuffer = ShortArray(2_048)
-                val frame = ShortArray(4_096)
-                var frameCount = 0
-                var totalFramesRead = 0L
+                val frameAssembler = OverlappedPcmFrameAssembler(frameSize = 4_096, overlap = 2_048)
                 var readFailed = false
                 val audioTimestamp = AudioTimestamp()
-                val frameCenterOffsetMs = (frame.size / 2L * 1_000L) / activeRate
+                val frameCenterOffsetMs = (frameAssembler.frameSize / 2L * 1_000L) / activeRate
 
                 withContext(Dispatchers.Main) {
                     onFrameCenterOffsetMs(frameCenterOffsetMs)
@@ -170,18 +168,12 @@ fun VocalPitchCapture(
                     )
                     when {
                         count > 0 -> {
-                            totalFramesRead += count
-                            val copied = minOf(count, frame.size - frameCount)
-                            readBuffer.copyInto(frame, frameCount, 0, copied)
-                            frameCount += copied
-
-                            if (frameCount == frame.size) {
-                                // PitchAnalyzer is read-only, so reuse the capture buffer.
-                                // Avoiding a per-frame copy reduces allocation and GC pressure.
+                            // READ_NON_BLOCKING may return partial chunks. Assemble every sample
+                            // into contiguous overlapping frames instead of dropping a tail.
+                            val frameResults = ArrayList<Pair<PitchAnalyzer.Pitch?, Long?>>(1)
+                            frameAssembler.append(readBuffer, 0, count) { frame, centerSamplePosition ->
                                 val pitch = PitchAnalyzer.analyze(frame, activeRate)
-                                // AudioRecord's monotonic timestamp lets the UI map this
-                                // frame center to the playback clock, including read/dispatch delay.
-                                val centerFramePosition = (totalFramesRead - frame.size / 2L).coerceAtLeast(0L)
+                                val centerFramePosition = centerSamplePosition.coerceAtLeast(0L)
                                 val captureCenterTimeNanos = runCatching {
                                     val status = audioRecord.getTimestamp(
                                         audioTimestamp,
@@ -195,10 +187,12 @@ fun VocalPitchCapture(
                                         } else null
                                     } else null
                                 }.getOrNull()
-                                withContext(Dispatchers.Main) { onPitch(pitch, captureCenterTimeNanos) }
-                                // 50% overlap gives a smoother pitch trace without excessive CPU use.
-                                frame.copyInto(frame, 0, frame.size / 2, frame.size)
-                                frameCount = frame.size / 2
+                                frameResults.add(pitch to captureCenterTimeNanos)
+                            }
+                            for ((pitch, captureCenterTimeNanos) in frameResults) {
+                                withContext(Dispatchers.Main) {
+                                    onPitch(pitch, captureCenterTimeNanos)
+                                }
                             }
                         }
                         count == 0 -> delay(6)
