@@ -112,7 +112,7 @@ object PitchAnalyzer {
         // ambiguous; cumulative normalization can make a longer lag look better
         // even for a clean high tone, incorrectly dropping it by an octave.
         if (normalized[candidate] >= OCTAVE_CORRECTION_MIN_CMND) {
-        while (candidate * 2 <= maxTau) {
+            while (candidate * 2 <= maxTau) {
             val doubled = candidate * 2
             val searchStart = (doubled - 2).coerceAtLeast(minTau)
             val searchEnd = (doubled + 2).coerceAtMost(maxTau)
@@ -125,8 +125,7 @@ object PitchAnalyzer {
             } else {
                 break
             }
-        }
-
+            }
         }
 
         val refinedTau = if (candidate > minTau && candidate < maxTau) {
