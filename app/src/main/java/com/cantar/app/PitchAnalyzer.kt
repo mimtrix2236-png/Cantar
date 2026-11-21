@@ -113,18 +113,18 @@ object PitchAnalyzer {
         // even for a clean high tone, incorrectly dropping it by an octave.
         if (normalized[candidate] >= OCTAVE_CORRECTION_MIN_CMND) {
             while (candidate * 2 <= maxTau) {
-            val doubled = candidate * 2
-            val searchStart = (doubled - 2).coerceAtLeast(minTau)
-            val searchEnd = (doubled + 2).coerceAtMost(maxTau)
-            if (searchStart > searchEnd) break
-            val subharmonic = (searchStart..searchEnd).minByOrNull { normalized[it] } ?: break
-            if (normalized[subharmonic] < normalized[candidate] * 0.65f &&
-                normalized[subharmonic] < 0.20f
-            ) {
-                candidate = subharmonic
-            } else {
-                break
-            }
+                val doubled = candidate * 2
+                val searchStart = (doubled - 2).coerceAtLeast(minTau)
+                val searchEnd = (doubled + 2).coerceAtMost(maxTau)
+                if (searchStart > searchEnd) break
+                val subharmonic = (searchStart..searchEnd).minByOrNull { normalized[it] } ?: break
+                if (normalized[subharmonic] < normalized[candidate] * 0.65f &&
+                    normalized[subharmonic] < 0.20f
+                ) {
+                    candidate = subharmonic
+                } else {
+                    break
+                }
             }
         }
 
