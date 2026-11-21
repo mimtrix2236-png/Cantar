@@ -18,6 +18,9 @@ object PitchAnalyzer {
         val confidence: Float
     )
 
+    // Avoid octave-down correction when the initial CMND minimum is already strong.
+    private const val OCTAVE_CORRECTION_MIN_CMND = 0.015f
+
     private val noteNames = arrayOf(
         "Do", "Do♯", "Re", "Re♯", "Mi", "Fa",
         "Fa♯", "Sol", "Sol♯", "La", "La♯", "Si"
@@ -105,8 +108,10 @@ object PitchAnalyzer {
         }
 
         // A strong second harmonic can make the first YIN threshold crossing
-        // look like an octave-up note. Prefer a convincing double-period minimum
-        // when its normalized difference is substantially lower.
+        // look like an octave-up note. Correct only when the initial CMND is
+        // ambiguous; cumulative normalization can make a longer lag look better
+        // even for a clean high tone, incorrectly dropping it by an octave.
+        if (normalized[candidate] >= OCTAVE_CORRECTION_MIN_CMND) {
         while (candidate * 2 <= maxTau) {
             val doubled = candidate * 2
             val searchStart = (doubled - 2).coerceAtLeast(minTau)
@@ -120,6 +125,8 @@ object PitchAnalyzer {
             } else {
                 break
             }
+        }
+
         }
 
         val refinedTau = if (candidate > minTau && candidate < maxTau) {

@@ -221,6 +221,19 @@ class PitchAnalyzerTest {
     }
 
     @Test
+    fun detects1200HzUpperBoundaryWithoutOctaveDown() {
+        val sampleRate = 44_100
+        val samples = ShortArray(4_096) { index ->
+            (sin(2.0 * PI * 1_200.0 * index / sampleRate) * 12_000.0).toInt().toShort()
+        }
+
+        val pitch = PitchAnalyzer.analyze(samples, sampleRate)
+
+        assertNotNull(pitch)
+        assertEquals(1_200f, pitch!!.frequencyHz, 10.0f)
+    }
+
+    @Test
     fun detectsHighSopranoAt1175Hz() {
         val sampleRate = 44_100
         val samples = ShortArray(4_096) { index ->
