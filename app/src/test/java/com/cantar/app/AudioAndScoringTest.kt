@@ -230,7 +230,17 @@ class PitchAnalyzerTest {
         val pitch = PitchAnalyzer.analyze(samples, sampleRate)
 
         assertNotNull(pitch)
-        assertEquals(1_200f, pitch!!.frequencyHz, 10.0f)
+        assertEquals(1_200f, pitch!!.frequencyHz, 2.0f)
+    }
+
+    @Test
+    fun rejectsToneAboveUpperFrequencyLimit() {
+        val sampleRate = 44_100
+        val samples = ShortArray(4_096) { index ->
+            (sin(2.0 * PI * 1_225.0 * index / sampleRate) * 12_000.0).toInt().toShort()
+        }
+
+        assertNull(PitchAnalyzer.analyze(samples, sampleRate))
     }
 
     @Test

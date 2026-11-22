@@ -128,7 +128,7 @@ object PitchAnalyzer {
             }
         }
 
-        val refinedTau = if (candidate > minTau && candidate < maxTau) {
+        val refinedTau = if (candidate > 1 && candidate < maxTau) {
             val left = normalized[candidate - 1]
             val center = normalized[candidate]
             val right = normalized[candidate + 1]
@@ -139,7 +139,17 @@ object PitchAnalyzer {
         } else candidate.toFloat()
 
         if (refinedTau <= 0f) return null
-        val frequency = effectiveRate / refinedTau
+        val measuredFrequency = effectiveRate / refinedTau
+        // Interpolation at the search boundary can overshoot by a fraction of a
+        // hertz. Snap only tiny numerical excursions back to the declared range.
+        val edgeTolerance = maxFrequency * 0.0025f
+        val frequency = when {
+            measuredFrequency > maxFrequency &&
+                measuredFrequency <= maxFrequency + edgeTolerance -> maxFrequency
+            measuredFrequency < minFrequency &&
+                measuredFrequency >= minFrequency - minFrequency * 0.0025f -> minFrequency
+            else -> measuredFrequency
+        }
         if (!frequency.isFinite() || frequency !in minFrequency..maxFrequency) return null
 
         val midi = (69.0 + 12.0 * ln(frequency / 440.0) / ln(2.0)).roundToInt()
