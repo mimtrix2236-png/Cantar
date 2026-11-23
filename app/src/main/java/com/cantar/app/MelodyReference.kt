@@ -35,7 +35,7 @@ fun canConnectPitchTrace(
 
 /** A silence marker must hide the live cursor instead of leaving a stale pitch dot. */
 fun latestVoicedTracePoint(trace: List<PitchTracePoint>): PitchTracePoint? =
-    trace.lastOrNull()?.takeIf { !it.breakBefore && it.midiValue.isFinite() }
+    trace.lastOrNull()?.takeIf { it.midiValue.isFinite() }
 
 /**
  * Aligns a pitch estimate to the center of its captured PCM frame rather than
