@@ -434,6 +434,13 @@ class PitchTraceContinuityTest {
     }
 
     @Test
+    fun showsLivePitchMarkerOnVoicedFrameAfterGap() {
+        val resumed = PitchTracePoint(190L, 69.1f, true, breakBefore = true)
+
+        org.junit.Assert.assertEquals(resumed, latestVoicedTracePoint(listOf(resumed)))
+    }
+
+    @Test
     fun hidesLivePitchMarkerAfterUnvoicedFrame() {
         val voiced = PitchTracePoint(100L, 69.0f, true)
         val silence = PitchTracePoint(145L, Float.NaN, false, breakBefore = true)
