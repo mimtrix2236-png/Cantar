@@ -25,11 +25,13 @@ fun canConnectPitchTrace(
     next: PitchTracePoint,
     maxGapMs: Long = 220L
 ): Boolean =
-    !previous.breakBefore &&
-        !next.breakBefore &&
+    !next.breakBefore &&
         previous.midiValue.isFinite() &&
         next.midiValue.isFinite() &&
-        (next.timeMs - previous.timeMs) in 1L..maxGapMs
+        previous.timeMs >= 0L &&
+        next.timeMs > previous.timeMs &&
+        maxGapMs > 0L &&
+        next.timeMs - previous.timeMs <= maxGapMs
 
 /** A silence marker must hide the live cursor instead of leaving a stale pitch dot. */
 fun latestVoicedTracePoint(trace: List<PitchTracePoint>): PitchTracePoint? =
@@ -110,17 +112,23 @@ object MelodyReferenceParser {
                 ?: throw IllegalArgumentException("Fila ${index + 2}: start_ms no es válido.")
             val midi = columns[midiColumn].toIntOrNull()
                 ?: throw IllegalArgumentException("Fila ${index + 2}: midi_note debe ser un entero.")
+            require(start >= 0L) { "Fila ${index + 2}: el tiempo no puede ser negativo." }
             val duration = if (durationColumn >= 0) {
                 columns[durationColumn].toLongOrNull()
                     ?: throw IllegalArgumentException("Fila ${index + 2}: duration_ms no es válido.")
             } else {
                 val end = columns[endColumn].toLongOrNull()
                     ?: throw IllegalArgumentException("Fila ${index + 2}: end_ms no es válido.")
+                require(end > start) {
+                    "Fila ${index + 2}: end_ms debe ser posterior a start_ms."
+                }
                 end - start
             }
 
-            require(start >= 0L) { "Fila ${index + 2}: el tiempo no puede ser negativo." }
             require(duration in 40L..600_000L) { "Fila ${index + 2}: duración fuera de rango (40–600000 ms)." }
+            require(start <= Long.MAX_VALUE - duration) {
+                "Fila ${index + 2}: el tiempo final excede el límite numérico."
+            }
             require(midi in 0..127) { "Fila ${index + 2}: MIDI debe estar entre 0 y 127." }
             ReferenceNote(start, duration, midi)
         }.sortedBy { it.startMs }
