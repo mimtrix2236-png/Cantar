@@ -314,6 +314,24 @@ class MelodyReferenceTest {
     }
 
     @Test
+    fun parsesEndMsColumnAndRequiresIncreasingTimeline() {
+        val note = MelodyReferenceParser.parseCsv("start_ms,end_ms,midi_note\n100,350,60").single()
+        assertEquals(100L, note.startMs)
+        assertEquals(250L, note.durationMs)
+        assertEquals(350L, note.endMs)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsEndTimeNotAfterStart() {
+        MelodyReferenceParser.parseCsv("start_ms,end_ms,midi_note\n100,99,60")
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsReferenceEndTimeOverflow() {
+        MelodyReferenceParser.parseCsv("start_ms,duration_ms,midi_note\n9223372036854775800,40,60")
+    }
+
+    @Test
     fun transpositionMovesTargetBySemitones() {
         val notes = MelodyReferenceParser.parseCsv("start_ms,duration_ms,midi_note\n0,300,69")
         val scorer = MelodyScorer(notes, transposeSemitones = 2)
@@ -377,6 +395,24 @@ class PitchTraceContinuityTest {
         val next = PitchTracePoint(165L, 69.1f, true)
 
         org.junit.Assert.assertTrue(canConnectPitchTrace(previous, next))
+    }
+
+    @Test
+    fun breakBeforeFlagOnlyBreaksTheIncomingSegment() {
+        val before = PitchTracePoint(50L, 68.9f, true)
+        val firstAfterGap = PitchTracePoint(100L, 69.0f, true, breakBefore = true)
+        val next = PitchTracePoint(165L, 69.1f, true)
+
+        org.junit.Assert.assertFalse(canConnectPitchTrace(before, firstAfterGap))
+        org.junit.Assert.assertTrue(canConnectPitchTrace(firstAfterGap, next))
+    }
+
+    @Test
+    fun rejectsNonPositiveMaximumGap() {
+        val previous = PitchTracePoint(100L, 69.0f, true)
+        val next = PitchTracePoint(165L, 69.1f, true)
+
+        org.junit.Assert.assertFalse(canConnectPitchTrace(previous, next, maxGapMs = 0L))
     }
 
     @Test
