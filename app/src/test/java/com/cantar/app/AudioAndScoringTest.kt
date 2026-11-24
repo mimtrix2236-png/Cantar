@@ -105,6 +105,17 @@ class AudioPitchShiftTest {
     }
 
     @Test
+    fun preservesPlaybackSpeedAndExactPitchRatioAcrossEverySupportedSemitone() {
+        for (semitones in AudioPitchShift.MIN_SEMITONES..AudioPitchShift.MAX_SEMITONES) {
+            val parameters = AudioPitchShift.playbackParameters(semitones)
+            val expectedPitch = Math.pow(2.0, semitones / 12.0).toFloat()
+
+            assertEquals("Playback speed at $semitones semitones", 1f, parameters.speed, 0f)
+            assertEquals("Pitch factor at $semitones semitones", expectedPitch, parameters.pitch, 0.0001f)
+        }
+    }
+
+    @Test
     fun clampsPitchShiftToOneOctave() {
         assertEquals(0.5f, AudioPitchShift.playbackParameters(-99).pitch, 0.0001f)
         assertEquals(2f, AudioPitchShift.playbackParameters(99).pitch, 0.0001f)
