@@ -36,7 +36,6 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -65,70 +64,70 @@ private val magenta=Color(0xFFE52CFF)
 private val orange=Color(0xFFFF8C00)
 private val electricBlue=Color(0xFF087DFF)
 
-private data class Song(val title:String,val artist:String,val key:String,val genre:String,val lang:String)
+private data class Song(val title:String,val artist:String,val genre:String,val lang:String)
 private val library=listOf(
- Song("De música ligera","Soda Stereo","Mi mayor","Rock nacional","Español"),
- Song("Persiana americana","Soda Stereo","Do sostenido menor","Rock nacional","Español"),
- Song("Lamento boliviano","Enanitos Verdes","Re mayor","Rock nacional","Español"),
- Song("Flaca","Andrés Calamaro","La mayor","Rock nacional","Español"),
- Song("La camisa negra","Juanes","Fa sostenido menor","Pop latino","Español"),
- Song("Vivir mi vida","Marc Anthony","Re menor","Salsa","Español"),
- Song("Despacito","Luis Fonsi","Si menor","Reguetón","Español"),
- Song("Provenza","Karol G","Do menor","Urbano latino","Español"),
- Song("Hasta la Raíz","Natalia Lafourcade","Do mayor","Pop latino","Español"),
- Song("La Bicicleta","Carlos Vives y Shakira","Fa mayor","Vallenato","Español"),
- Song("Todo de ti","Rauw Alejandro","Do sostenido menor","Urbano latino","Español"),
- Song("Oye cómo va","Santana","La menor","Latin rock","Español"),
- Song("Perfect","Ed Sheeran","Sol bemol mayor","Pop","Inglés"),
- Song("Shape of You","Ed Sheeran","Do sostenido menor","Pop","Inglés"),
- Song("Bohemian Rhapsody","Queen","Si bemol mayor","Rock","Inglés"),
- Song("Smells Like Teen Spirit","Nirvana","Fa menor","Grunge","Inglés"),
- Song("Billie Jean","Michael Jackson","Fa sostenido menor","Pop","Inglés"),
- Song("Hotel California","Eagles","Si menor","Rock","Inglés"),
- Song("Take On Me","a-ha","La mayor","Synth pop","Inglés"),
- Song("La vie en rose","Édith Piaf","Do mayor","Chanson","Francés"),
- Song("Dragostea Din Tei","O-Zone","No verificada","Eurodance","Rumano"),
- Song("Bombón asesino","Los Palmeras","No verificada","Cumbia","Español"),
- Song("Nunca me faltes","Antonio Ríos","No verificada","Cumbia","Español"),
- Song("Cómo te voy a olvidar","Los Ángeles Azules","No verificada","Cumbia","Español"),
- Song("Beso a beso","La Mona Jiménez","No verificada","Cuarteto","Español"),
- Song("Quién se ha tomado todo el vino","La Mona Jiménez","No verificada","Cuarteto","Español"),
- Song("Propuesta indecente","Romeo Santos","No verificada","Bachata","Español"),
- Song("Obsesión","Aventura","No verificada","Bachata","Español"),
- Song("Suavemente","Elvis Crespo","No verificada","Merengue","Español"),
- Song("Por una cabeza","Carlos Gardel","No verificada","Tango","Español"),
- Song("Zamba de mi esperanza","Los Chalchaleros","No verificada","Folklore","Español"),
- Song("Alfonsina y el mar","Mercedes Sosa","No verificada","Folklore","Español"),
- Song("Garota de Ipanema","João Gilberto","No verificada","Bossa nova","Portugués"),
- Song("Take Me Home, Country Roads","John Denver","No verificada","Country","Inglés"),
- Song("Fly Me to the Moon","Frank Sinatra","No verificada","Jazz","Inglés"),
- Song("The Thrill Is Gone","B.B. King","No verificada","Blues","Inglés"),
- Song("Lose Yourself","Eminem","No verificada","Hip-hop","Inglés"),
- Song("Three Little Birds","Bob Marley & The Wailers","No verificada","Reggae","Inglés"),
- Song("Dynamite","BTS","No verificada","K-pop","Coreano"),
- Song("Lemon","Kenshi Yonezu","No verificada","J-pop","Japonés"),
- Song("Entre dos aguas","Paco de Lucía","No verificada","Flamenco","Instrumental"),
- Song("Oh Happy Day","Edwin Hawkins Singers","No verificada","Gospel","Inglés"),
- Song("Titanium","David Guetta feat. Sia","No verificada","Electrónica","Inglés"),
- Song("Contigo aprendí","Armando Manzanero","No verificada","Bolero","Español"),
- Song("Aquarela do Brasil","João Gilberto","No verificada","Samba","Portugués"),
- Song("Mas que nada","Sérgio Mendes","No verificada","Samba","Portugués"),
- Song("El Rey","Vicente Fernández","No verificada","Regional mexicano","Español"),
- Song("La puerta negra","Los Tigres del Norte","No verificada","Regional mexicano","Español"),
- Song("Los dueños del pabellón","Damas Gratis","No verificada","Cumbia villera","Español"),
- Song("Kilómetro 11","Tránsito Cocomarola","No verificada","Chamamé","Español"),
- Song("Milonga sentimental","Carlos Gardel","No verificada","Milonga","Español"),
- Song("Asa Branca","Luiz Gonzaga","No verificada","Forró","Portugués"),
- Song("Evidências","Chitãozinho & Xororó","No verificada","Sertanejo","Portugués"),
- Song("No Scrubs","TLC","No verificada","R&B","Inglés"),
- Song("Juicy","The Notorious B.I.G.","No verificada","Rap","Inglés"),
- Song("Wake Me Up","Avicii","No verificada","Dance","Inglés"),
- Song("Stayin' Alive","Bee Gees","No verificada","Disco","Inglés"),
- Song("Enter Sandman","Metallica","No verificada","Metal","Inglés"),
- Song("Riptide","Vance Joy","No verificada","Indie","Inglés"),
- Song("Superstition","Stevie Wonder","No verificada","Funk","Inglés"),
- Song("Calm Down","Rema","No verificada","Afrobeats","Inglés"),
- Song("Ode to Joy","Ludwig van Beethoven","No verificada","Clásica","Instrumental")
+ Song("De música ligera","Soda Stereo","Rock nacional","Español"),
+ Song("Persiana americana","Soda Stereo","Rock nacional","Español"),
+ Song("Lamento boliviano","Enanitos Verdes","Rock nacional","Español"),
+ Song("Flaca","Andrés Calamaro","Rock nacional","Español"),
+ Song("La camisa negra","Juanes","Pop latino","Español"),
+ Song("Vivir mi vida","Marc Anthony","Salsa","Español"),
+ Song("Despacito","Luis Fonsi","Reguetón","Español"),
+ Song("Provenza","Karol G","Urbano latino","Español"),
+ Song("Hasta la Raíz","Natalia Lafourcade","Pop latino","Español"),
+ Song("La Bicicleta","Carlos Vives y Shakira","Vallenato","Español"),
+ Song("Todo de ti","Rauw Alejandro","Urbano latino","Español"),
+ Song("Oye cómo va","Santana","Latin rock","Español"),
+ Song("Perfect","Ed Sheeran","Pop","Inglés"),
+ Song("Shape of You","Ed Sheeran","Pop","Inglés"),
+ Song("Bohemian Rhapsody","Queen","Rock","Inglés"),
+ Song("Smells Like Teen Spirit","Nirvana","Grunge","Inglés"),
+ Song("Billie Jean","Michael Jackson","Pop","Inglés"),
+ Song("Hotel California","Eagles","Rock","Inglés"),
+ Song("Take On Me","a-ha","Synth pop","Inglés"),
+ Song("La vie en rose","Édith Piaf","Chanson","Francés"),
+ Song("Dragostea Din Tei","O-Zone","Eurodance","Rumano"),
+ Song("Bombón asesino","Los Palmeras","Cumbia","Español"),
+ Song("Nunca me faltes","Antonio Ríos","Cumbia","Español"),
+ Song("Cómo te voy a olvidar","Los Ángeles Azules","Cumbia","Español"),
+ Song("Beso a beso","La Mona Jiménez","Cuarteto","Español"),
+ Song("Quién se ha tomado todo el vino","La Mona Jiménez","Cuarteto","Español"),
+ Song("Propuesta indecente","Romeo Santos","Bachata","Español"),
+ Song("Obsesión","Aventura","Bachata","Español"),
+ Song("Suavemente","Elvis Crespo","Merengue","Español"),
+ Song("Por una cabeza","Carlos Gardel","Tango","Español"),
+ Song("Zamba de mi esperanza","Los Chalchaleros","Folklore","Español"),
+ Song("Alfonsina y el mar","Mercedes Sosa","Folklore","Español"),
+ Song("Garota de Ipanema","João Gilberto","Bossa nova","Portugués"),
+ Song("Take Me Home, Country Roads","John Denver","Country","Inglés"),
+ Song("Fly Me to the Moon","Frank Sinatra","Jazz","Inglés"),
+ Song("The Thrill Is Gone","B.B. King","Blues","Inglés"),
+ Song("Lose Yourself","Eminem","Hip-hop","Inglés"),
+ Song("Three Little Birds","Bob Marley & The Wailers","Reggae","Inglés"),
+ Song("Dynamite","BTS","K-pop","Coreano"),
+ Song("Lemon","Kenshi Yonezu","J-pop","Japonés"),
+ Song("Entre dos aguas","Paco de Lucía","Flamenco","Instrumental"),
+ Song("Oh Happy Day","Edwin Hawkins Singers","Gospel","Inglés"),
+ Song("Titanium","David Guetta feat. Sia","Electrónica","Inglés"),
+ Song("Contigo aprendí","Armando Manzanero","Bolero","Español"),
+ Song("Aquarela do Brasil","João Gilberto","Samba","Portugués"),
+ Song("Mas que nada","Sérgio Mendes","Samba","Portugués"),
+ Song("El Rey","Vicente Fernández","Regional mexicano","Español"),
+ Song("La puerta negra","Los Tigres del Norte","Regional mexicano","Español"),
+ Song("Los dueños del pabellón","Damas Gratis","Cumbia villera","Español"),
+ Song("Kilómetro 11","Tránsito Cocomarola","Chamamé","Español"),
+ Song("Milonga sentimental","Carlos Gardel","Milonga","Español"),
+ Song("Asa Branca","Luiz Gonzaga","Forró","Portugués"),
+ Song("Evidências","Chitãozinho & Xororó","Sertanejo","Portugués"),
+ Song("No Scrubs","TLC","R&B","Inglés"),
+ Song("Juicy","The Notorious B.I.G.","Rap","Inglés"),
+ Song("Wake Me Up","Avicii","Dance","Inglés"),
+ Song("Stayin' Alive","Bee Gees","Disco","Inglés"),
+ Song("Enter Sandman","Metallica","Metal","Inglés"),
+ Song("Riptide","Vance Joy","Indie","Inglés"),
+ Song("Superstition","Stevie Wonder","Funk","Inglés"),
+ Song("Calm Down","Rema","Afrobeats","Inglés"),
+ Song("Ode to Joy","Ludwig van Beethoven","Clásica","Instrumental")
 )
 private val styles=listOf("Todos","Rock nacional","Pop latino","Rock","Pop","Reguetón","Urbano latino","Cumbia","Cumbia villera","Cuarteto","Salsa","Bachata","Merengue","Vallenato","Tango","Chamamé","Milonga","Folklore","Latin rock","Bolero","Bossa nova","Samba","Forró","Sertanejo","Regional mexicano","Jazz","Blues","R&B","Hip-hop","Rap","Reggae","Electrónica","Dance","Disco","Country","Metal","Grunge","Synth pop","Eurodance","Indie","Funk","Gospel","Chanson","K-pop","J-pop","Afrobeats","Flamenco","Clásica")
 private enum class Page { HOME, PROFILE, LIBRARY, SETUP, SING, RESULT, HISTORY, SETTINGS }
@@ -161,7 +160,7 @@ class MainActivity:ComponentActivity(){
   val savedTitle=prefs.getString("selected_title",library[6].title) ?: library[6].title
   val savedArtist=prefs.getString("selected_artist",library[6].artist) ?: library[6].artist
   mutableStateOf(library.firstOrNull{it.title==savedTitle && it.artist==savedArtist}
-   ?: Song(savedTitle,savedArtist,"No verificada","Audio local","Local"))
+   ?: Song(savedTitle,savedArtist,"Audio local","Local"))
  }
  var query by remember { mutableStateOf("") }
  var remoteTracks by remember { mutableStateOf(emptyList<LrclibTrack>()) }
@@ -338,7 +337,7 @@ class MainActivity:ComponentActivity(){
    lyricLines=emptyList()
    if(page!=Page.SETUP){
     val displayName=uri.lastPathSegment?.substringAfterLast('/')?.substringAfterLast(':') ?: "Audio local"
-    selected=Song(displayName,"Archivo local","No verificada","Audio local","Local")
+    selected=Song(displayName,"Archivo local","Audio local","Local")
    }
    playbackStarted=false
    audioError=""
@@ -552,7 +551,7 @@ class MainActivity:ComponentActivity(){
       if(remoteError.isNotBlank())Text(remoteError,color=gold,fontSize=11.sp)
       LazyColumn(verticalArrangement=Arrangement.spacedBy(8.dp)){
        items(remoteTracks,key={ "lrc-${it.id}" }){track->Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(panel).clickable{
-        selectSong(Song(track.trackName,track.artistName,"No verificada","Sin clasificar","Sin clasificar"));lyricLines=parseLrc(track.syncedLyrics.orEmpty())
+        selectSong(Song(track.trackName,track.artistName,"Sin clasificar","Sin clasificar"));lyricLines=parseLrc(track.syncedLyrics.orEmpty())
        }.padding(12.dp),verticalAlignment=Alignment.CenterVertically){
         Icon(Icons.Default.MusicNote,null,tint=green,modifier=Modifier.size(34.dp));Column(Modifier.weight(1f).padding(horizontal=10.dp)){Text(track.trackName,fontWeight=FontWeight.Bold);Text(track.artistName,color=muted,fontSize=12.sp);Text(if(track.syncedLyrics!=null)"Letra sincronizada disponible" else if(track.plainLyrics!=null)"Letra disponible (sin tiempos)" else "Sin letra disponible",color=cyan,fontSize=11.sp)};Text("ONLINE",color=green,fontSize=10.sp)
        }}
