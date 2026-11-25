@@ -6,7 +6,7 @@ Aplicación Android nativa de karaoke y entrenamiento vocal, con interfaz azul o
 
 - Interfaz Android con Jetpack Compose, navegación atrás y confirmación de salida.
 - Perfiles locales, favoritos, modo Solo y modo Duelo por turnos en un solo teléfono.
-- Biblioteca de ejemplos con filtros por idioma y géneros latinoamericanos e internacionales. Los ejemplos no incluyen grabaciones ni licencias.
+- Biblioteca de ejemplos con filtros por idioma y géneros latinoamericanos e internacionales. Los ejemplos no incluyen grabaciones ni licencias. Las entradas no almacenan tonalidades originales supuestas: la interfaz las muestra como no verificadas hasta que exista una referencia fiable.
 - Búsqueda de letras en LRCLIB sin API key. LRCLIB proporciona metadatos y letras; no entrega audio.
 - Búsqueda externa de pistas karaoke en YouTube desde la configuración o desde cada canción de la biblioteca. Abre resultados de YouTube, pero no extrae ni reproduce su audio.
 - En karaoke horizontal, la letra sincronizada se muestra inicialmente y puede ocultarse para ampliar el panel de afinación.
