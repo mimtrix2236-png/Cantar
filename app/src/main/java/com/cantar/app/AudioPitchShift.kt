@@ -12,8 +12,11 @@ object AudioPitchShift {
     const val MIN_SEMITONES = -12
     const val MAX_SEMITONES = 12
 
+    fun clampSemitones(semitones: Int): Int =
+        semitones.coerceIn(MIN_SEMITONES, MAX_SEMITONES)
+
     fun playbackParameters(semitones: Int): PlaybackParameters {
-        val bounded = semitones.coerceIn(MIN_SEMITONES, MAX_SEMITONES)
+        val bounded = clampSemitones(semitones)
         val pitchFactor = 2.0.pow(bounded / 12.0).toFloat()
         return PlaybackParameters(1f, pitchFactor)
     }
