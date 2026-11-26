@@ -149,8 +149,16 @@ class MelodyScorer(
     transposeSemitones: Int = 0,
     private val toleranceCents: Float = 50f
 ) {
+    init {
+        require(toleranceCents.isFinite() && toleranceCents > 0f) {
+            "La tolerancia de afinación debe ser un número positivo y finito."
+        }
+    }
+
+    // Keep scoring targets inside the same transposition range used by the audio player.
+    private val boundedTranspose = AudioPitchShift.clampSemitones(transposeSemitones)
     private val notes = referenceNotes.map {
-        it.copy(midiNote = (it.midiNote + transposeSemitones).coerceIn(0, 127))
+        it.copy(midiNote = (it.midiNote + boundedTranspose).coerceIn(0, 127))
     }
     private val samples = Array(notes.size) { mutableListOf<Float>() }
     private val scores = mutableListOf<NoteScore>()
