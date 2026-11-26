@@ -119,6 +119,8 @@ class AudioPitchShiftTest {
     fun clampsPitchShiftToOneOctave() {
         assertEquals(0.5f, AudioPitchShift.playbackParameters(-99).pitch, 0.0001f)
         assertEquals(2f, AudioPitchShift.playbackParameters(99).pitch, 0.0001f)
+        assertEquals(-12, AudioPitchShift.clampSemitones(-99))
+        assertEquals(12, AudioPitchShift.clampSemitones(99))
     }
 }
 
@@ -348,6 +350,24 @@ class MelodyReferenceTest {
         val scorer = MelodyScorer(notes, transposeSemitones = 2)
 
         assertEquals(71, scorer.targetAt(100)?.midiNote)
+    }
+
+    @Test
+    fun scorerUsesTheSameOneOctaveTransposeLimitAsAudioPlayback() {
+        val notes = MelodyReferenceParser.parseCsv("start_ms,duration_ms,midi_note\n0,300,69")
+
+        assertEquals(81, MelodyScorer(notes, transposeSemitones = 99).targetAt(100)?.midiNote)
+        assertEquals(57, MelodyScorer(notes, transposeSemitones = -99).targetAt(100)?.midiNote)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsZeroScoringTolerance() {
+        MelodyScorer(emptyList(), toleranceCents = 0f)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsNonFiniteScoringTolerance() {
+        MelodyScorer(emptyList(), toleranceCents = Float.NaN)
     }
 
 
